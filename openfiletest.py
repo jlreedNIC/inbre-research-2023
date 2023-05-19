@@ -24,8 +24,17 @@ except Exception as e:
     print('may need to install matplotlib package')
     print(e)
 
+try:
+    import numpy as np
+except Exception as e:
+    print('issue with numpy import')
+    print('may need to install numpy package')
+    print(e)
+
+medium_file = 'nd2_files/SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2'
+small_file = 'nd2_files/Undamaged-structual-example.nd2'
 # open nd2 file
-with ND2Reader('Undamaged-structual-example.nd2') as sample_image:
+with ND2Reader(small_file) as sample_image:
     print(sample_image)
     
     print(f'\nnd2 file metadata: \n {sample_image.metadata}')
@@ -36,21 +45,35 @@ with ND2Reader('Undamaged-structual-example.nd2') as sample_image:
     print(f'total number of images to show: {sample_image.shape[0]}')
     print(f'size of images: {sample_image.shape[1]} x {sample_image.shape[2]}')
     
+    # create new array of size [z, channels, img pixels (2)]
+    # new_img_arr = np.zeros((sample_image.sizes['z'], sample_image.sizes['c'], sample_image.shape[1], sample_image.shape[2]))
+    
     # show all images
     for i in range(sample_image.shape[0]):  
-        # next 2 lines are for putting all images into a single subplot
-        # NOTE: this makes the images hard to see
-        # num rows = num images along z axis
-        # num cols = num img per channel
-        plt.subplot(sample_image.sizes['z'], sample_image.sizes['c'], (i+1))        
-        plt.imshow(sample_image[i])
-        
-        # following code will output images one after the other
+        """ next 2 lines are for putting all images into a single subplot
+        NOTE: this makes the images hard to see
+        num rows = num images along z axis
+        num cols = num img per channel
+        this has trouble running with bigger images and more images
+        """
+        # plt.subplot(sample_image.sizes['z'], sample_image.sizes['c'], (i+1))        
         # plt.imshow(sample_image[i])
-        # plt.show()
-        # plt.close()
+        
+        # following code will output images one after the other and save it to file
+        plt.imshow(sample_image[i])
+        plt.savefig(f'images/whole_retina_img{i}.png')
+        plt.show()
+        plt.close()
+        
+        # this code will put images into another array of size [z, channels, img height, img width]
+        # x = int(i/2)
+        # y = i%2
+        # new_img_arr[x][y] = sample_image[i]
+    
+# print(new_img_arr.shape)
         
 
 '''
-This file will successfully open the nd2 file and show the images requested
+This file will successfully open the nd2 file and show the images requested.
+Program will also save images and move data to another array
 '''
