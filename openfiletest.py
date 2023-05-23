@@ -33,7 +33,7 @@ except Exception as e:
 
 file_names = [
     'nd2_files/SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
-    'nd2_files/Undamaged-structual-example.nd2', # 80mb pretty sure
+    'nd2_files/Undamaged-structual-example.nd2', # 58mb
     'nd2_files/S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2' #40mb
 ]
 
