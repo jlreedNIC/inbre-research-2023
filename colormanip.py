@@ -20,6 +20,8 @@ except Exception as e:
     print('You may need to install importlib package if issue with nd2reader.')
     print(e)
 
+import custom_color_map as ccm
+
 file_names = [
     'nd2_files/SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
     'nd2_files/Undamaged-structual-example.nd2', # 58mb 
@@ -75,7 +77,7 @@ with ND2Reader(file_names[2]) as sample_image:
 
     start = dt.datetime.now()
     # following code will output a picture using different color maps and the imshow function
-    color_map_list = ['YlOrRd', 'CMRmap', 'Greens', 'Purples', 'binary']
+    color_map_list = [ccm.green_channel, ccm.blue_channel, ccm.red_channel, ccm.pink_channel]
     cindex = 0
     for i in range(0, sample_image.shape[0]):
         if i != 0 and i%img_per_channel==0:
@@ -87,20 +89,20 @@ with ND2Reader(file_names[2]) as sample_image:
     stop = dt.datetime.now()
     print(f'time taken for imshow with colormap: {stop-start}')
 
-    start = dt.datetime.now()
-    color_options = ['green', 'red', 'blue', 'pink']
-    ci = 0
-    # apply different custom channel to each set of 5 images
-    for i in range(sample_image.shape[0]):
-        if i != 0 and i%img_per_channel == 0:
-            ci += 1
-        maxval = np.max(sample_image[i])
-        perc_img = turn_into_percentage(sample_image[i], maxval)
-        new_img = perc_to_rgb(perc_img, color_channels[color_options[ci]])
-        plt.imshow(new_img)
-        plt.show()
-    stop = dt.datetime.now()
-    print(f'time taken for manual color adjustment: {stop-start}')
+    # start = dt.datetime.now()
+    # color_options = ['green', 'red', 'blue', 'pink']
+    # ci = 0
+    # # apply different custom channel to each set of 5 images
+    # for i in range(sample_image.shape[0]):
+    #     if i != 0 and i%img_per_channel == 0:
+    #         ci += 1
+    #     maxval = np.max(sample_image[i])
+    #     perc_img = turn_into_percentage(sample_image[i], maxval)
+    #     new_img = perc_to_rgb(perc_img, color_channels[color_options[ci]])
+    #     plt.imshow(new_img)
+    #     plt.show()
+    # stop = dt.datetime.now()
+    # print(f'time taken for manual color adjustment: {stop-start}')
 
 
     
