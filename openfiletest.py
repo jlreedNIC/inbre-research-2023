@@ -31,10 +31,14 @@ except Exception as e:
     print('may need to install numpy package')
     print(e)
 
-medium_file = 'nd2_files/SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2'
-small_file = 'nd2_files/Undamaged-structual-example.nd2'
+file_names = [
+    'nd2_files/SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
+    'nd2_files/Undamaged-structual-example.nd2', # 80mb pretty sure
+    'nd2_files/S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2' #40mb
+]
+
 # open nd2 file
-with ND2Reader(small_file) as sample_image:
+with ND2Reader(file_names[1]) as sample_image:
     print(sample_image)
     
     print(f'\nnd2 file metadata: \n {sample_image.metadata}')
@@ -61,9 +65,9 @@ with ND2Reader(small_file) as sample_image:
         
         # following code will output images one after the other and save it to file
         plt.imshow(sample_image[i])
-        plt.savefig(f'images/whole_retina_img{i}.png')
+        # plt.savefig(f'images/whole_retina_img{i}.png')
         plt.show()
-        plt.close()
+        # plt.close()
         
         # this code will put images into another array of size [z, channels, img height, img width]
         # x = int(i/2)
