@@ -7,6 +7,10 @@
 #           alongside the code. If executing in another IDE, changes should be
 #           made to save the pictures shown one after another so the images 
 #           are not lost.
+#
+#       note: to get this to work on my windows machine, I had to go in and change a file in the nd2reader packages
+#           /home/jreed/.local/lib/python3.8/site-packages/nd2reader/raw_metadata.py around line 296
+#           changing np.float to np.float16
 # ------------
 
 
@@ -38,7 +42,7 @@ file_names = [
 ]
 
 # open nd2 file
-with ND2Reader(file_names[1]) as sample_image:
+with ND2Reader(file_names[2]) as sample_image:
     print(sample_image)
     
     print(f'\nnd2 file metadata: \n {sample_image.metadata}')
