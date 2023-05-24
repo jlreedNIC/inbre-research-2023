@@ -74,6 +74,21 @@ pink_dict = {
     )
 }
 
+purple_dict = {
+    'red': (
+        (0.0, 0.0, 0.0),
+        (1.0, 0.63, 0.63)
+    ),
+    'green': (
+        (0.0, 0.0, 0.0),
+        (1.0, 0.13, 0.13)
+    ),
+    'blue': (
+        (0.0, 0.0, 0.0),
+        (1.0, 0.94, 0.94)
+    )
+}
+
 '''
 Creates an actual color map that imshow() understands for each dict specified above.
 '''
@@ -81,3 +96,4 @@ green_channel = mcolors.LinearSegmentedColormap('green_channel', green_dict)
 red_channel = mcolors.LinearSegmentedColormap('red_channel', red_dict)
 blue_channel = mcolors.LinearSegmentedColormap('blue_channel', blue_dict)
 pink_channel = mcolors.LinearSegmentedColormap('pink_channel', pink_dict)
+purple_channel = mcolors.LinearSegmentedColormap('purple_channel', purple_dict)
