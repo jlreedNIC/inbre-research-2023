@@ -44,6 +44,11 @@ with ND2Reader(file_names[3]) as sample_image:
         
         img = sample_image[i]
         blur_img = cv2.GaussianBlur(img,(7,7),0)
+        '''
+        try doing enhance contrast
+        gaussian blur
+        unsharp mask
+        '''
     
         maxval = np.max(blur_img)
         mask = .425 * maxval
