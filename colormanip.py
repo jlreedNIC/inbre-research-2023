@@ -25,7 +25,8 @@ import custom_color_map as ccm
 file_names = [
     'nd2_files/SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
     'nd2_files/Undamaged-structual-example.nd2', # 58mb 
-    'nd2_files/S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2' #40mb
+    'nd2_files/S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2', #40mb
+    'nd2_files/S2-6dpi-uoi2506Tg-1R-#13-sxn2002.nd2' # 70mb
 ]
 
 def find_max(table):
@@ -63,8 +64,13 @@ color_channels = {
     'pink': (1.0, 0.75, 0.80)
 }
 
+def show_image_using_scalar(img, color_channel=ccm.green_channel):
+    maxval = np.max(img)
+    plt.imshow(img,vmax=maxval, cmap=color_channel)
+    plt.show()
+
 # open nd2 file
-with ND2Reader(file_names[2]) as sample_image:
+with ND2Reader(file_names[3]) as sample_image:
 
     # iterate over all channels and entire z stack
     num_channels = sample_image.sizes['c']
@@ -77,17 +83,22 @@ with ND2Reader(file_names[2]) as sample_image:
 
     start = dt.datetime.now()
     # following code will output a picture using different color maps and the imshow function
-    color_map_list = [ccm.green_channel, ccm.blue_channel, ccm.red_channel, ccm.pink_channel]
+    color_map_list = [ccm.green_channel, ccm.red_channel, ccm.purple_channel, ccm.blue_channel]
     cindex = 0
     for i in range(0, sample_image.shape[0]):
         if i != 0 and i%img_per_channel==0:
             cindex += 1
         
-        maxval = np.max(sample_image[i])
-        plt.imshow(sample_image[i],vmax=maxval, cmap=color_map_list[cindex])
-        plt.show()
+        # maxval = np.max(sample_image[i])
+        # plt.imshow(sample_image[i],vmax=maxval, cmap=color_map_list[cindex])
+        # plt.show()
+        show_image_using_scalar(sample_image[i], color_map_list[cindex])
     stop = dt.datetime.now()
     print(f'time taken for imshow with colormap: {stop-start}')
+
+    # maxval = np.max(sample_image[2])
+    # plt.imshow(sample_image[2],vmax=maxval, cmap=ccm.green_channel)
+    # plt.show()
 
     # start = dt.datetime.now()
     # color_options = ['green', 'red', 'blue', 'pink']
