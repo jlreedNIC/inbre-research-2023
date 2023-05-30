@@ -11,23 +11,26 @@ from ij.gui import WaitForUserDialog
 from ij import IJ
 from ij import ImagePlus
 
-def create_composite(imp, channel_indeces = [2,3]):
+def create_composite(imp, channel_indeces = None):
     """
     channels is an array of ints representing channels to merge
     imp is image plus object representing main image
     """
-#    print('splitting channels up')
-    channels = ChannelSplitter.split(imp)
+    if channel_indeces == None and type(imp) != type([]):
+        print("if no indeces are given, imp must be a list of images in their separate channels")
+        return
     
-    img_list = []
-#    print('putting channels into list')
-    for i in channel_indeces:
-        img_list.append(channels[i])
-    
-#    print('now merging channels')
+    if channel_indeces != None:
+        channels = ChannelSplitter.split(imp)
+        
+        img_list = []
+        for i in channel_indeces:
+            img_list.append(channels[i])
+    else:
+        img_list = imp
+
     new_img = RGBStackMerge.mergeChannels(img_list, False)
     
-#    print('showing merged img')
     new_img.show()
     
     return new_img
@@ -73,31 +76,51 @@ def process_composite_img():
     imp = IJ.getImage() # gets active image
 
     imp2 = ZProjector.run(imp,"max") # compress all z into one image (for now)
+    
+    
+    channels = ChannelSplitter.split(imp)
     imp.close() # close orig img
     
-    imp3 = create_composite(imp2, [2,3])
-
+#    imp3 = create_composite(imp2, [2,3])
     imp2.close()
+    
+    ch2imp = channels[2]
+    ch3imp = channels[3]
 
-    IJ.run(imp3, "Enhance Contrast", "saturated=0.35")
-    IJ.run(imp3, "Gaussian Blur...", "sigma=3")
-    IJ.run(imp3, "Unsharp Mask...", "radius=4 mask=0.60")
-    imp3.show()
+    IJ.run(ch2imp, "Enhance Contrast", "saturated=0.35")
+    IJ.run(ch2imp, "Gaussian Blur...", "sigma=3")
+    IJ.run(ch2imp, "Unsharp Mask...", "radius=4 mask=0.60")
+    
+    IJ.run(ch3imp, "Enhance Contrast", "saturated=0.35")
+    IJ.run(ch3imp, "Gaussian Blur...", "sigma=3")
+    IJ.run(ch3imp, "Unsharp Mask...", "radius=4 mask=0.60")
+    
+    ch2imp.show()
+    ch3imp.show()
     
     rm = RoiManager().getInstance()
     WaitForUserDialog("Create ROI's, then click Add.").show()
-    IJ.setAutoThreshold(imp3, "Default dark") # what is this doing
+    IJ.setAutoThreshold(ch2imp, "Default dark") # what is this doing
+    IJ.setAutoThreshold(ch3imp, "Default dark") # what is this doing
     IJ.run("Threshold...")
     
-    WaitForUserDialog("Set threshold, then click apply.").show()
+    WaitForUserDialog("Set threshold, then click apply. Create ROI for channel 3 first").show()
+    
+    new_img = create_composite([ch2imp, ch3imp])
     
     # following function will tell the ROI manager to select the first ROI in the list
     rm.select(0)
     # ---------
 
-    IJ.run(imp3, "Fill Holes", "")
-    IJ.run(imp3, "Watershed", "")
-    IJ.run(imp3, "Analyze Particles...", "size=5-Infinity show=Outlines display clear include summarize");
+    IJ.run(new_img, "Fill Holes", "")
+    IJ.run(new_img, "Watershed", "")
+    IJ.run(new_img, "Analyze Particles...", "size=5-Infinity show=Outlines display clear include summarize")
+    
+#    IJ.run(ch3imp, "Fill Holes", "")
+#    IJ.run(ch3imp, "Watershed", "")
+#    IJ.run(ch3imp, "Analyze Particles...", "size=5-Infinity show=Outlines display clear include summarize")
+    
+    
     WaitForUserDialog("Count your cells, then click OK.").show()
     #rm.runCommand(imp2,"Delete")
     IJ.selectWindow("Results")
@@ -108,7 +131,7 @@ def process_composite_img():
 
     IJ.selectWindow("Summary")
     IJ.run("Close")
-    imp3.close()
+    new_img.close()
     
     
 
