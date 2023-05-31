@@ -64,6 +64,7 @@ def apply_mask(img, imask):
     :return ImagePlus: image with binary mask applied
     """
     mask = imask.getProcessor()
+    mask.invert()
     target = img.getProcessor()
     target.setValue(0)
     target.fill(mask)
