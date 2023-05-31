@@ -44,6 +44,11 @@ def turn_into_percentage(table, maxval):
         for j in range(0, len(table[0])):
             new_table[i][j] = float(table[i][j]) / float(maxval)
     
+    '''
+    try:
+        pic = table/maxval
+    '''
+    
     return new_table
 
 def perc_to_rgb(table, rgb_val):
