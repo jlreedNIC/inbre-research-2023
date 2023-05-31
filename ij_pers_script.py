@@ -5,6 +5,7 @@ from ij.plugin import ChannelSplitter
 from ij.plugin import GaussianBlur3D as gb
 from ij.plugin.frame import RoiManager
 from ij.plugin import RGBStackMerge
+from ij.plugin import ImageCalculator
 
 from ij.gui import WaitForUserDialog
 
@@ -35,6 +36,19 @@ def create_composite(imp, channel_indeces = None):
     
     return new_img
 
+def apply_mask(img, imask):
+#    masked_img = ImageCalculator.run(img, imask, "multiply")
+#    
+#    if masked_img == None:
+#        return img
+#    else:
+#        return masked_img
+    mask = imask.getProcessor()
+    target = img.getProcessor()
+    target.setValue(0)
+    target.fill(mask)
+    return img
+
 def process_image():
     imp = IJ.getImage() # gets active image
     imp2 = ZProjector.run(imp,"max") # compress all z into one image (for now)
@@ -58,7 +72,7 @@ def process_image():
     # ---------
 
     IJ.run(imp3, "Fill Holes", "")
-    IJ.run(imp3, "Watershed", "")
+    IJ.run(imp3, "Watershed", "")    
     IJ.run(imp3, "Analyze Particles...", "size=5-Infinity show=Outlines display clear include summarize");
     WaitForUserDialog("Count your cells, then click OK.").show()
     #rm.runCommand(imp2,"Delete")
@@ -77,7 +91,7 @@ def process_composite_img():
 
     imp2 = ZProjector.run(imp,"max") # compress all z into one image (for now)
     
-    
+    imp2.show()
     channels = ChannelSplitter.split(imp)
     imp.close() # close orig img
     
@@ -86,6 +100,9 @@ def process_composite_img():
     
     ch2imp = channels[2]
     ch3imp = channels[3]
+    
+    ch2imp = ZProjector.run(ch2imp, "max")
+    ch3imp = ZProjector.run(ch3imp, "max")
 
     IJ.run(ch2imp, "Enhance Contrast", "saturated=0.35")
     IJ.run(ch2imp, "Gaussian Blur...", "sigma=3")
@@ -106,7 +123,16 @@ def process_composite_img():
     
     WaitForUserDialog("Set threshold, then click apply. Create ROI for channel 3 first").show()
     
-    new_img = create_composite([ch2imp, ch3imp])
+    
+#    new_img = create_composite([ch2imp, ch3imp])
+    new_img = apply_mask(ch2imp, ch3imp)
+#    new_img.show()
+    try:
+        new_img.updateImage()
+    except:
+        print("no new img to show")
+    else:
+        new_img.show()
     
     # following function will tell the ROI manager to select the first ROI in the list
     rm.select(0)
@@ -132,23 +158,22 @@ def process_composite_img():
     IJ.selectWindow("Summary")
     IJ.run("Close")
     new_img.close()
+    ch3imp.close()
     
     
 
 # ------------- main ------------------------------
 
 od = OpenDialog("Images", "")
+
+# following opens a single file at a time
 fileName = od.getFileName()
 directory = od.getDirectory()
 IJ.run("Bio-Formats Importer", "open=[" + directory + fileName + "] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT series_list=")
-print(fileName)
+print("Working with", fileName)
 
-#process_image()
 
 process_composite_img()
-# open image
-# apply auto contrast and brightness
-# apply smoothing and/or blur
 
 #imp = O.openImage(directory,fileName)
 #print(imp)
