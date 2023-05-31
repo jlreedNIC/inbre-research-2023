@@ -14,7 +14,7 @@ from ij import ImagePlus
 
 # -------------------------------
 # @author   Jordan Reed (some code taken from original writer of pcna.py)
-# @date     
+# @date     5/26/23
 # @brief    This code will run in ImageJ to separate out 2 channels of interest,
 #           apply image filtering (gaussian blur, contrast enhancing, etc) and thresholding
 #           to each image. A mask of one image is then applied to the other image to see 
