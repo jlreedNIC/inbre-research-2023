@@ -102,7 +102,7 @@ adapt_adj = copy.copy(adj)
 adapt_thresh = cv2.adaptiveThreshold(adj, np.max(adj), cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, blockSize=9, C=4)
 mask = adapt_thresh == 255
 adapt_adj[mask] = 0
-cv2.imshow('with adaptive mean mask', adapt_adj)
+# cv2.imshow('with adaptive mean mask', adapt_adj)
 # show_image_using_scalar(adapt_adj, ccm.purple_channel)
 
 
@@ -111,7 +111,7 @@ gauss_thresh = cv2.adaptiveThreshold(adj, np.max(adj), cv2.ADAPTIVE_THRESH_GAUSS
 gmask = gauss_thresh == 255
 adj[gmask] = 0
 # cv2.imshow('adaptive with gaussian', adj)
-cv2.waitKey(0)
+# cv2.waitKey(0)
 # show_image_using_scalar(adj, ccm.purple_channel)
 
 # --- apply morphological techniques
@@ -145,3 +145,13 @@ cv2.waitKey(0)
     # cv2.imshow("Gradient: ({}, {})".format(
     #     kernelSize[0], kernelSize[1]), gradient)
     # cv2.waitKey(0)
+
+# ---- testing watershed from skimage
+
+# from skimage.segmentation import watershed
+# new_img = watershed(adapt_adj)
+# print(type(new_img), new_img)
+# show_image_using_scalar(new_img)
+
+# cv2.imshow('watershed', new_img)
+# cv2.waitKey(0)
