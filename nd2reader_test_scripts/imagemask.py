@@ -1,7 +1,7 @@
 # ------------
 # @author   Jordan Reed
 # @date     5/23/23
-# @brief    This file is to test an image mask
+# @brief    This file is to test an image mask with basic 'custom' thresholding
 # ------------
 
 
@@ -18,16 +18,55 @@ except Exception as e:
 
 import custom_color_map as ccm
 
+folder_loc = '../nd2_files/'
 file_names = [
-    'nd2_files/SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
-    'nd2_files/Undamaged-structual-example.nd2', # 58mb 
-    'nd2_files/S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2', #40mb
-    'nd2_files/S2-6dpi-uoi2506Tg-1R-#13-sxn2002.nd2' # 70mb
+    'SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
+    'Undamaged-structual-example.nd2', # 58mb 
+    'S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2', #40mb
+    'S2-6dpi-uoi2506Tg-1R-#13-sxn2002.nd2' # 70mb
 ]
 
+def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str):
+    """Extracts all images from the specified channel
+
+    Args:
+        nd2img (ND2Reader Object): open nd2 file from which data is extracted
+        channel_name (string): name of channel in nd2 file
+
+    Returns:
+        numpy array: array of images (array of arrays)
+    """
+    
+    nd2img.iter_axes = 'cz'
+    channel_num = nd2img.metadata['channels'].index(channel_name)+1
+    print(f'{channel_name} at channel {channel_num}')
+    z_img_num = nd2img.sizes['z']
+
+    new_arr = np.zeros((z_img_num, nd2img.metadata['height'], nd2img.metadata['width']))
+    index = 0
+    for i in range( (channel_num-1)*z_img_num, channel_num*z_img_num ):
+        new_arr[index] = nd2img[i]
+        index += 1
+    
+    return new_arr
+
+def compress_stack(img_stack):
+
+    # looping like this slows the program down
+    # keeping it to try min, avg, sum, etc
+    # new_arr = np.zeros((img_stack[0].shape))
+
+    # for i in range(new_arr.shape[0]):
+    #     for j in range(new_arr.shape[1]):
+    #         new_arr[i][j] = np.max(img_stack[:,i,j])
+
+    # new array created by taking max value of all imgs in stack
+    new_arr = np.amax(img_stack, 0)
+
+    return new_arr
 
 # open nd2 file
-with ND2Reader(file_names[3]) as sample_image:
+with ND2Reader(folder_loc + file_names[2]) as sample_image:
     
     # iterate over all channels and entire z stack
     num_channels = sample_image.sizes['c']
@@ -38,39 +77,36 @@ with ND2Reader(file_names[3]) as sample_image:
     print(f'images per channel: {img_per_channel}')
     print(f'size of images: {sample_image.shape[1]} x {sample_image.shape[2]}')
 
-    # orig = sample_image[11]
-    ch = 2
-    for i in range((ch-1)*img_per_channel, ch*img_per_channel): #sample_image.shape[0]): #sample_image.shape[0]):
-        
-        img = sample_image[i]
-        blur_img = cv2.GaussianBlur(img,(7,7),0)
-        '''
-        try doing enhance contrast
-        gaussian blur
-        unsharp mask
-        '''
-    
-        maxval = np.max(blur_img)
-        mask = .425 * maxval
-        background_mask = maxval * .4
-        background_layer_mask = maxval * .65 #(maxval + background_mask)/2
-    
-        np_bckgrnd_img_arr = np.asarray(blur_img) <= background_mask
-        blur_img[np_bckgrnd_img_arr] = 0
-        np_prev_layer_arr = (np.asarray(blur_img) > 0) & (np.asarray(blur_img) <= background_layer_mask)
-        blur_img[np_prev_layer_arr] = maxval * .25
-        print(blur_img)
-    
-        # original image
-        plt.subplot(1,2,1)
-        plt.imshow(sample_image[i], vmax=np.max(sample_image[i]), cmap=ccm.purple_channel)
-        # plt.show()
-        
-        # gaussian blur image
-        plt.subplot(1,2,2)
-        print(np.max(blur_img), mask)
-        plt.imshow(blur_img,vmax=maxval, cmap=ccm.purple_channel)
-        plt.show()
+    pcna_imgs = get_imgs_from_channel(sample_image, 'far red')
+    neuron_imgs = get_imgs_from_channel(sample_image, 'DAPI')
+
+img = compress_stack(pcna_imgs)
+
+
+blur_img = cv2.GaussianBlur(img,(7,7),0)
+adj = cv2.convertScaleAbs(blur_img, alpha=.15, beta=100)
+
+maxval = np.max(adj)
+mask = .425 * maxval
+background_mask = maxval * .4
+background_layer_mask = maxval * .65 #(maxval + background_mask)/2
+
+np_bckgrnd_img_arr = np.asarray(adj) <= background_mask
+adj[np_bckgrnd_img_arr] = 0
+np_prev_layer_arr = (np.asarray(adj) > 0) & (np.asarray(adj) <= background_layer_mask)
+adj[np_prev_layer_arr] = maxval * .25
+# print(adj)
+
+# original image
+# plt.subplot(1,2,1)
+# plt.imshow(img, vmax=np.max(img), cmap=ccm.purple_channel)
+# plt.show()
+
+# gaussian blur image
+# plt.subplot(1,2,2)
+# print(np.max(adj), mask)
+plt.imshow(adj,vmax=maxval, cmap=ccm.purple_channel)
+plt.show()
     
     
 
