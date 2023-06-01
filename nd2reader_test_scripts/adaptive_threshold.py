@@ -89,15 +89,6 @@ adj = cv2.convertScaleAbs(blur_img, alpha=.15, beta=100)
 # show_image_using_scalar(adj, ccm.purple_channel)
 cv2.imshow('adjusted original', adj)
 
-# gets background out essentially
-# (T, basic_thresholding) = cv2.threshold(adj, np.mean(adj), np.max(adj), cv2.THRESH_BINARY_INV)
-# cv2.imshow('basic thresholding', basic_thresholding)
-
-# basic_mask = basic_thresholding == 255
-# adj[basic_mask] = 0
-# cv2.imshow('apply basic thresholding', adj)
-# show_image_using_scalar(basic_thresholding, ccm.purple_channel)
-
 # otsu's thresholding
 T, otsus_method = cv2.threshold(adj, 0,np.max(adj), cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
 otsu_mask = otsus_method == 255
@@ -106,24 +97,12 @@ adj[otsu_mask] = 0
 # show_image_using_scalar(otsus_method)
 # separates out background better
 
-# testing which values of b and c work best
-# 11 or 9 and 4=c
-# import copy
-# #adaptive
-# for block in range(7,17,2):
-#     for c in range(0,10):
-#         temp = copy.copy(adj)
-#         adapt_thresh = cv2.adaptiveThreshold(adj, np.max(adj), cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, blockSize=block, C=c)
-#         mask = adapt_thresh == 255
-#         temp[mask] = 0
-#         cv2.imshow(f'adaptive with blocksize {block} c {c}', temp)
-
 import copy
 adapt_adj = copy.copy(adj)
 adapt_thresh = cv2.adaptiveThreshold(adj, np.max(adj), cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, blockSize=9, C=4)
 mask = adapt_thresh == 255
 adapt_adj[mask] = 0
-# cv2.imshow('with adaptive mean mask', adapt_adj)
+cv2.imshow('with adaptive mean mask', adapt_adj)
 # show_image_using_scalar(adapt_adj, ccm.purple_channel)
 
 
@@ -132,5 +111,37 @@ gauss_thresh = cv2.adaptiveThreshold(adj, np.max(adj), cv2.ADAPTIVE_THRESH_GAUSS
 gmask = gauss_thresh == 255
 adj[gmask] = 0
 # cv2.imshow('adaptive with gaussian', adj)
-# cv2.waitKey(0)
+cv2.waitKey(0)
 # show_image_using_scalar(adj, ccm.purple_channel)
+
+# --- apply morphological techniques
+
+# testing erosion
+# for i in range(0,3):
+#     eroded = cv2.erode(adapt_adj.copy(), None, iterations=i+1)
+#     cv2.imshow(f'eroded {i+1} times', eroded)
+#     cv2.waitKey(0)
+
+# ---- testing opening
+# kernelSizes = [(3, 3), (5, 5), (7, 7)]
+# # loop over the kernels sizes
+# for kernelSize in kernelSizes:
+# 	# construct a rectangular kernel from the current size and then
+# 	# apply an "opening" operation
+# 	kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernelSize)
+# 	opening = cv2.morphologyEx(adapt_adj, cv2.MORPH_OPEN, kernel)
+# 	cv2.imshow("Opening: ({}, {})".format(
+# 		kernelSize[0], kernelSize[1]), opening)
+# 	cv2.waitKey(0)
+
+
+# testing gradient
+# loop over the kernels a final time
+# for kernelSize in kernelSizes:
+	# construct a rectangular kernel and apply a "morphological
+	# gradient" operation to the image
+    # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernelSize)
+    # gradient = cv2.morphologyEx(adapt_adj, cv2.MORPH_GRADIENT, kernel)
+    # cv2.imshow("Gradient: ({}, {})".format(
+    #     kernelSize[0], kernelSize[1]), gradient)
+    # cv2.waitKey(0)
