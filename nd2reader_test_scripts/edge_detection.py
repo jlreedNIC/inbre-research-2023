@@ -7,8 +7,9 @@
 from nd2reader import ND2Reader
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 
-from skimage import filters
+from skimage import filters, feature
 # from skimage.data import camera
 # from skimage.util import compare_images
 
@@ -68,9 +69,10 @@ img = pcna_imgs[1]
 edge_prewitt = filters.prewitt(img)
 edge_scharr = filters.scharr(img)
 edge_sobel = filters.sobel(img)
+edge_canny = feature.canny(img, sigma=1.5)
 
 fig, axes = plt.subplots(ncols=2, nrows=2, sharex=True, sharey=True,
-                         figsize=(8, 8))
+                         figsize=(10, 10))
 
 ax = axes.ravel()
 
@@ -83,8 +85,8 @@ ax[1].set_title('scharr Edge Detection')
 ax[2].imshow(edge_sobel, cmap=plt.cm.gray)
 ax[2].set_title('Sobel Edge Detection')
 
-ax[3].imshow(edge_prewitt, cmap=plt.cm.gray)
-ax[3].set_title('prewitt Edge Detection')
+ax[3].imshow(edge_canny, cmap=plt.cm.gray)
+ax[3].set_title('canny Edge Detection')
 
 for a in ax:
     a.axis('off')
