@@ -16,7 +16,7 @@ except Exception as e:
     print(e)
 
 import custom_color_map as ccm
-folder_loc = '../nd2_files/'
+folder_loc = 'nd2_files/'
 file_names = [
     'SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
     'Undamaged-structual-example.nd2', # 58mb 
@@ -80,78 +80,23 @@ with ND2Reader(folder_loc + file_names[2]) as imgs:
     neuron_imgs = get_imgs_from_channel(imgs, "DAPI")
 
 # start with single img to work with
-img = compress_stack(pcna_imgs)
-blur_img = cv2.GaussianBlur(img, (7,7), 0) # think about enhancing contrast
-adj = cv2.convertScaleAbs(blur_img, alpha=.15, beta=100)
+# img = compress_stack(pcna_imgs)
+img = pcna_imgs[1]
+blur_img = cv2.GaussianBlur(img, (7,7), 0) # apply blur
+adj = cv2.convertScaleAbs(blur_img, alpha=.15, beta=100) # enhance contrast and brightness
 
-# show_image_using_scalar(img, ccm.purple_channel)
-# show_image_using_scalar(blur_img, ccm.purple_channel)
-# show_image_using_scalar(adj, ccm.purple_channel)
 cv2.imshow('adjusted original', adj)
 
 # otsu's thresholding
 T, otsus_method = cv2.threshold(adj, 0,np.max(adj), cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
 otsu_mask = otsus_method == 255
 adj[otsu_mask] = 0
-# cv2.imshow('otsus method mask', adj)
-# show_image_using_scalar(otsus_method)
 # separates out background better
 
-import copy
-adapt_adj = copy.copy(adj)
-adapt_thresh = cv2.adaptiveThreshold(adj, np.max(adj), cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, blockSize=9, C=4)
+# import copy
+adapt_thresh = cv2.adaptiveThreshold(adj, np.max(adj), cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, blockSize=25, C=5)
 mask = adapt_thresh == 255
-adapt_adj[mask] = 0
-# cv2.imshow('with adaptive mean mask', adapt_adj)
-# show_image_using_scalar(adapt_adj, ccm.purple_channel)
+adj[mask] = 0
 
-
-# adaptive with gaussian mean
-gauss_thresh = cv2.adaptiveThreshold(adj, np.max(adj), cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, blockSize=15, C=5)
-gmask = gauss_thresh == 255
-adj[gmask] = 0
-# cv2.imshow('adaptive with gaussian', adj)
-# cv2.waitKey(0)
-# show_image_using_scalar(adj, ccm.purple_channel)
-
-# --- apply morphological techniques
-
-# testing erosion
-# for i in range(0,3):
-#     eroded = cv2.erode(adapt_adj.copy(), None, iterations=i+1)
-#     cv2.imshow(f'eroded {i+1} times', eroded)
-#     cv2.waitKey(0)
-
-# ---- testing opening
-# kernelSizes = [(3, 3), (5, 5), (7, 7)]
-# # loop over the kernels sizes
-# for kernelSize in kernelSizes:
-# 	# construct a rectangular kernel from the current size and then
-# 	# apply an "opening" operation
-# 	kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernelSize)
-# 	opening = cv2.morphologyEx(adapt_adj, cv2.MORPH_OPEN, kernel)
-# 	cv2.imshow("Opening: ({}, {})".format(
-# 		kernelSize[0], kernelSize[1]), opening)
-# 	cv2.waitKey(0)
-
-
-# testing gradient
-# loop over the kernels a final time
-# for kernelSize in kernelSizes:
-	# construct a rectangular kernel and apply a "morphological
-	# gradient" operation to the image
-    # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernelSize)
-    # gradient = cv2.morphologyEx(adapt_adj, cv2.MORPH_GRADIENT, kernel)
-    # cv2.imshow("Gradient: ({}, {})".format(
-    #     kernelSize[0], kernelSize[1]), gradient)
-    # cv2.waitKey(0)
-
-# ---- testing watershed from skimage
-
-# from skimage.segmentation import watershed
-# new_img = watershed(adapt_adj)
-# print(type(new_img), new_img)
-# show_image_using_scalar(new_img)
-
-# cv2.imshow('watershed', new_img)
-# cv2.waitKey(0)
+cv2.imshow('with adaptive mean mask', adj)
+cv2.waitKey(0)
