@@ -113,24 +113,24 @@ with ND2Reader(folder_loc + file_names[2]) as imgs:
 # img = compress_stack(pcna_imgs)
 img = pcna_imgs[1]
 
+# apply edge detection to original image
 edge_prewitt = filters.prewitt(img)
 edge_scharr = filters.scharr(img)
 edge_sobel = filters.sobel(img)
 edge_canny = feature.canny(img, sigma=1.5)
 
+# apply otsus thresholding to original image
 new_img, inv_mask = apply_otsus_threshhold(img)
 
 print(inv_mask)
 
+# overlay otsus binary mask on edge detection to get rid of background
 edge_canny[inv_mask] = True
 
-
-
-import copy
-# trying to subtract outlines from original image
-# new_img = copy.copy(img)
+# overlay edges onto otsus threshold image to outline individual cells
 new_img[edge_canny] = 0
 
+# apply erosion and dialation to 'open' image and get cells
 kernel = np.ones((5,5))
 opening = cv2.morphologyEx(new_img, cv2.MORPH_OPEN, kernel, iterations=1)
 
@@ -140,23 +140,11 @@ opening[cells] = 255
 # count cells
 labeled_image, count = measure.label(opening, return_num=True)
 print(count)
-print(labeled_image)
 
+# color the counted cells a random color
 colored_labeled_img = color.label2rgb(labeled_image, bg_label=0)
 
-use_subplots([img, new_img, opening, labeled_image, colored_labeled_img], 
-             ['original', 'after edge detection applied', 'after opening applied', 'after counting', 'after coloring'],
-             ncols=3, nrows=2
+use_subplots([img, new_img, opening, colored_labeled_img], 
+             ['original', 'after edge detection applied', 'after opening applied', f'final result: {count} cells'],
+             ncols=4, nrows=1
 )
-
-# use_subplots([img, adj], ['original', 'after otsus'], 3, 1)
-
-
-# -----------------------
-# showing difference between different edge detection methods
-# use_subplots(
-#     [img, edge_scharr, edge_sobel, edge_canny],
-#     ['original', 'Scharr Edge Detection', 'Sobel Edge Detection', 'Canny Edge Detection'],
-#     2, 2
-# )
-# -------------------
