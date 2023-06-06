@@ -99,6 +99,43 @@ def apply_adaptive_threshold(img, block=9, c=4):
 
     return img
 
+def create_transparent_img(orig):
+    transparent = np.zeros((orig.shape[0], orig.shape[1], 4))
+
+    for i in range(0, len(orig)):
+        for j in range(0, len(orig[0])):
+            isBlack = True # for checking if all rgb values => black
+            for k in range(0,3):
+                transparent[i][j][k] = orig[i][j][k]
+
+                if transparent[i][j][k] != 0:
+                    isBlack = False
+
+            if not isBlack:
+                transparent[i][j][3] = 1
+    
+    return transparent
+
+def combine_imgs(orig, new_img):
+    # orig must be a scalar
+    gray_rgb = [.5,.5,.5]
+    orig = orig/255 # put into 255 range
+
+    combine = np.zeros((orig.shape[0], orig.shape[1], 4))
+
+    for i in range(0, len(orig)):
+        for j in range(0, len(orig[0])):
+            if new_img[i][j][3] == 1:
+                # use new_img pixel
+                combine[i][j] = new_img[i][j]
+            else:
+                # convert scalar orig into rgb and put into new
+                for k in range(0,3):
+                    combine[i][j][k] = orig[i][j]*gray_rgb[k]
+                combine[i][j][3] = 1
+    
+    return combine
+
 folder_loc = 'nd2_files/'
 file_names = [
     'SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
@@ -111,18 +148,13 @@ with ND2Reader(folder_loc + file_names[2]) as imgs:
     pcna_imgs = get_imgs_from_channel(imgs, 'DAPI')
 
 # img = compress_stack(pcna_imgs)
-img = pcna_imgs[1]
+img = pcna_imgs[2]
 
 # apply edge detection to original image
-edge_prewitt = filters.prewitt(img)
-edge_scharr = filters.scharr(img)
-edge_sobel = filters.sobel(img)
 edge_canny = feature.canny(img, sigma=1.5)
 
 # apply otsus thresholding to original image
 new_img, inv_mask = apply_otsus_threshhold(img)
-
-print(inv_mask)
 
 # overlay otsus binary mask on edge detection to get rid of background
 edge_canny[inv_mask] = True
@@ -132,6 +164,8 @@ new_img[edge_canny] = 0
 
 # apply erosion and dialation to 'open' image and get cells
 kernel = np.ones((5,5))
+# kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(5,5))
+# kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
 opening = cv2.morphologyEx(new_img, cv2.MORPH_OPEN, kernel, iterations=1)
 
 cells = opening != 0
@@ -144,7 +178,19 @@ print(count)
 # color the counted cells a random color
 colored_labeled_img = color.label2rgb(labeled_image, bg_label=0)
 
-use_subplots([img, new_img, opening, colored_labeled_img], 
-             ['original', 'after edge detection applied', 'after opening applied', f'final result: {count} cells'],
-             ncols=4, nrows=1
-)
+# use_subplots([img, new_img, opening, colored_labeled_img], 
+#              ['original', 'after edge detection applied', 'after opening applied', f'final result: {count} cells'],
+#              ncols=4, nrows=1
+# )
+
+# create transparent image
+trans_image = create_transparent_img(colored_labeled_img)
+
+print('transparent image created')
+
+# combine transparent img with orig
+combine_img = combine_imgs(img, trans_image)
+
+use_subplots([img, new_img, opening, combine_img],
+             ['original', 'after edge detection', 'after opening', f'counted {count} cells'],
+             ncols=4)
