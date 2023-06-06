@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 
-from skimage import filters, feature
+from skimage import filters, feature, color, measure
 # from skimage.data import camera
 # from skimage.util import compare_images
 
@@ -52,6 +52,53 @@ def compress_stack(img_stack):
 
     return new_arr
 
+def use_subplots(imgs:list, titles = [], ncols = 1, nrows=1):
+    num = len(imgs)
+
+    if num == 0:
+        print("you must pass images in list form")
+        return
+    if num > (ncols*nrows):
+        print("num images don't match rows and columns")
+        return
+    
+    fig, axes = plt.subplots(ncols=ncols, nrows=nrows, sharex=True, sharey=True, figsize=(10,10))
+    ax = axes.ravel()
+
+    for i in range(0, len(imgs)):
+        ax[i].imshow(imgs[i], cmap='gray')
+
+        if i >= len(titles):
+            title = f'figure {i}'
+        else:
+            title = titles[i]
+
+        ax[i].set_title(title)
+
+    for a in ax:
+        a.axis('off')
+
+    plt.tight_layout()
+    plt.show()
+
+def apply_otsus_threshhold(img):
+    blur_img = cv2.GaussianBlur(img, (7,7), 0) # apply blur
+    adj = cv2.convertScaleAbs(blur_img, alpha=.1, beta=100) # enhance contrast and brightness
+
+    # otsu's thresholding
+    T, otsus_method = cv2.threshold(adj, 0,np.max(adj), cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    otsu_mask = otsus_method > 0
+    adj[otsu_mask] = 0
+
+    return adj, otsu_mask
+
+def apply_adaptive_threshold(img, block=9, c=4):
+    adapt_thresh = cv2.adaptiveThreshold(img, np.max(img), cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, blockSize=block, C=c)
+    mask = adapt_thresh == 255
+    img[mask] = 0
+
+    return img
+
 folder_loc = 'nd2_files/'
 file_names = [
     'SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
@@ -71,25 +118,45 @@ edge_scharr = filters.scharr(img)
 edge_sobel = filters.sobel(img)
 edge_canny = feature.canny(img, sigma=1.5)
 
-fig, axes = plt.subplots(ncols=2, nrows=2, sharex=True, sharey=True,
-                         figsize=(10, 10))
+new_img, inv_mask = apply_otsus_threshhold(img)
 
-ax = axes.ravel()
+print(inv_mask)
 
-ax[0].imshow(img, cmap='gray')
-ax[0].set_title('original')
+edge_canny[inv_mask] = True
 
-ax[1].imshow(edge_scharr, cmap=plt.cm.gray)
-ax[1].set_title('scharr Edge Detection')
 
-ax[2].imshow(edge_sobel, cmap=plt.cm.gray)
-ax[2].set_title('Sobel Edge Detection')
 
-ax[3].imshow(edge_canny, cmap=plt.cm.gray)
-ax[3].set_title('canny Edge Detection')
+import copy
+# trying to subtract outlines from original image
+# new_img = copy.copy(img)
+new_img[edge_canny] = 0
 
-for a in ax:
-    a.axis('off')
+kernel = np.ones((5,5))
+opening = cv2.morphologyEx(new_img, cv2.MORPH_OPEN, kernel, iterations=1)
 
-plt.tight_layout()
-plt.show()
+cells = opening != 0
+opening[cells] = 255
+
+# count cells
+labeled_image, count = measure.label(opening, return_num=True)
+print(count)
+print(labeled_image)
+
+colored_labeled_img = color.label2rgb(labeled_image, bg_label=0)
+
+use_subplots([img, new_img, opening, labeled_image, colored_labeled_img], 
+             ['original', 'after edge detection applied', 'after opening applied', 'after counting', 'after coloring'],
+             ncols=3, nrows=2
+)
+
+# use_subplots([img, adj], ['original', 'after otsus'], 3, 1)
+
+
+# -----------------------
+# showing difference between different edge detection methods
+# use_subplots(
+#     [img, edge_scharr, edge_sobel, edge_canny],
+#     ['original', 'Scharr Edge Detection', 'Sobel Edge Detection', 'Canny Edge Detection'],
+#     2, 2
+# )
+# -------------------
