@@ -1,7 +1,8 @@
 # ------------
 # @author   Jordan Reed
-# @date     6/2/23
-# @brief    This file is testing edge detection
+# @date     6/7/23
+# @brief    Program to find and count cells on given channels using edge 
+#           detection, thresholding, and morphological techniques.
 # ------------
 
 from nd2reader import ND2Reader
