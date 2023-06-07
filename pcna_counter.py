@@ -14,22 +14,24 @@ import copy
 from skimage import filters, feature, color, measure
 
 def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str):
-    """Extracts all images from the specified channel
+    """Get all images in the stack for a specified channel in an open ND2 file.
 
-    Args:
-        nd2img (ND2Reader Object): open nd2 file from which data is extracted
-        channel_name (string): name of channel in nd2 file
-
-    Returns:
-        numpy array: array of images (array of arrays)
+    :param ND2Reader nd2img: Open ND2 file using ND2Reader
+    :param str channel_name: channel name given in string format. Ex - 'far red' or 'DAPI'
+    :return list: list of images in a numpy array
     """
-    
+    # get all channels and all z
     nd2img.iter_axes = 'cz'
+    # get index of channel
     channel_num = nd2img.metadata['channels'].index(channel_name)+1
-    print(f'{channel_name} at channel {channel_num}')
+
+    print(f'{channel_name} is at channel number {channel_num}')
+
+    # get number of images in channel
     z_img_num = nd2img.sizes['z']
 
     new_arr = np.zeros((z_img_num, nd2img.metadata['height'], nd2img.metadata['width']))
+    # put all images into new array
     index = 0
     for i in range( (channel_num-1)*z_img_num, channel_num*z_img_num ):
         new_arr[index] = nd2img[i]
@@ -37,22 +39,25 @@ def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str):
     
     return new_arr
 
-def compress_stack(img_stack):
+def compress_stack(img_stack:list):
+    """Combines all images in an array into one image by taking the maximum value of the images for each pixel.
 
-    # looping like this slows the program down
-    # keeping it to try min, avg, sum, etc
-    # new_arr = np.zeros((img_stack[0].shape))
-
-    # for i in range(new_arr.shape[0]):
-    #     for j in range(new_arr.shape[1]):
-    #         new_arr[i][j] = np.max(img_stack[:,i,j])
-
+    :param list img_stack: list of gray-scale images
+    :return numpy array: a numpy array containing a single image
+    """
     # new array created by taking max value of all imgs in stack
     new_arr = np.amax(img_stack, 0)
 
     return new_arr
 
-def use_subplots(imgs:list, titles = [], ncols = 1, nrows=1):
+def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1):
+    """Show images in a matplotlib subplot format.
+
+    :param list imgs: List containing images to show.
+    :param list titles: List containing titles of images, defaults to []
+    :param int ncols: number of columns in subplot, defaults to 2
+    :param int nrows: number of rows in subplot, defaults to 1
+    """
     num = len(imgs)
 
     if num == 0:
@@ -82,6 +87,13 @@ def use_subplots(imgs:list, titles = [], ncols = 1, nrows=1):
     plt.show()
 
 def apply_otsus_threshhold(img):
+    """Applies Otsu's Thresholding method to an image. 
+    First applies a Gaussian Blur, then enhances the brightness and 
+    contrast of the image before applying thresholding.
+
+    :param list img: Image in an array format
+    :return array(s): Array with thresholding applied, as well as the binary mask that was applied to image
+    """
     blur_img = cv2.GaussianBlur(img, (7,7), 0) # apply blur
     # blur_img = filters.gaussian(img, sigma = 3.0)
     adj = cv2.convertScaleAbs(blur_img, alpha=.1, beta=100) # enhance contrast and brightness
@@ -95,6 +107,13 @@ def apply_otsus_threshhold(img):
     return adj, otsu_mask
 
 def apply_adaptive_threshold(img, block=9, c=4):
+    """Applies adaptive thresholding to an image using OpenCV's adaptive threshold.
+
+    :param array img: image in an array format
+    :param int block: block size to break image into, defaults to 9
+    :param int c: c for adaptive threshold, defaults to 4
+    :return array: array after thresholding applied
+    """
     adapt_thresh = cv2.adaptiveThreshold(img, np.max(img), cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, blockSize=block, C=c)
     mask = adapt_thresh == 255
     img[mask] = 0
@@ -102,17 +121,27 @@ def apply_adaptive_threshold(img, block=9, c=4):
     return img
 
 def custom_threshold(img, val=0):
+    """Applies a basic thresholding by zeroing any pixel less than the given value
+
+    :param array img: image in array format
+    :param int val: threshold value to 0 out, defaults to 0
+    :return array: image after thresholding applied
+    """
     temp = copy.copy(img)
     if val == 0:
         val = np.mean(img)
     
     mask = img <= val
     temp[mask] = 0
-    # img[mask] = 0
 
     return temp
 
 def create_transparent_img(orig):
+    """Converts an RGB image into RGBA and makes all black pixels transparent.
+
+    :param array orig: image in array format with shape (h,w,3)
+    :return array: image with shape (h,w,4)
+    """
     transparent = np.zeros((orig.shape[0], orig.shape[1], 4))
 
     for i in range(0, len(orig)):
@@ -130,6 +159,12 @@ def create_transparent_img(orig):
     return transparent
 
 def combine_imgs(orig, new_img):
+    """Combines an image in gray scale with an image with a transparent background into a single image to create an overlay.
+
+    :param array orig: image in array format with shape (h,w)
+    :param array new_img: image in array with shape (h,w,4)
+    :return array: image with shape (h,w,4)
+    """
     # orig must be a scalar
     gray_rgb = [.5,.5,.5]
     orig = orig/255 # put into 255 range
@@ -150,10 +185,17 @@ def combine_imgs(orig, new_img):
     return combine
 
 def create_image_overlay(colored_cells_img, orig_img):
+    """Calls 2 functions to make an image have a transparent background, then overlay the two images
+
+    :param array colored_cells_img: array of shape(h,w,4)
+    :param array orig_img: array of shape (h,w)
+    :return array: array of shape (h,w,4)
+    """
     trans_image = create_transparent_img(colored_cells_img)
     combined = combine_imgs(orig_img, trans_image)
 
     return combined
+
 folder_loc = 'nd2_files/'
 file_names = [
     'SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
