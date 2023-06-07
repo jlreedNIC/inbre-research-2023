@@ -8,10 +8,10 @@ from nd2reader import ND2Reader
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+import datetime as dt
+import copy
 
 from skimage import filters, feature, color, measure
-# from skimage.data import camera
-# from skimage.util import compare_images
 
 def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str):
     """Extracts all images from the specified channel
@@ -84,6 +84,7 @@ def use_subplots(imgs:list, titles = [], ncols = 1, nrows=1):
 def apply_otsus_threshhold(img):
     blur_img = cv2.GaussianBlur(img, (7,7), 0) # apply blur
     adj = cv2.convertScaleAbs(blur_img, alpha=.1, beta=100) # enhance contrast and brightness
+    
 
     # otsu's thresholding
     T, otsus_method = cv2.threshold(adj, 0,np.max(adj), cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
@@ -98,6 +99,17 @@ def apply_adaptive_threshold(img, block=9, c=4):
     img[mask] = 0
 
     return img
+
+def custom_threshold(img, val=0):
+    temp = copy.copy(img)
+    if val == 0:
+        val = np.mean(img)
+    
+    mask = img <= val
+    temp[mask] = 0
+    # img[mask] = 0
+
+    return temp
 
 def create_transparent_img(orig):
     transparent = np.zeros((orig.shape[0], orig.shape[1], 4))
@@ -145,10 +157,10 @@ file_names = [
 ]
 
 with ND2Reader(folder_loc + file_names[2]) as imgs:
-    pcna_imgs = get_imgs_from_channel(imgs, 'DAPI')
+    pcna_imgs = get_imgs_from_channel(imgs, 'far red')
 
 # img = compress_stack(pcna_imgs)
-img = pcna_imgs[2]
+img = pcna_imgs[1]
 
 # apply edge detection to original image
 edge_canny = feature.canny(img, sigma=1.5)
@@ -162,6 +174,9 @@ edge_canny[inv_mask] = True
 # overlay edges onto otsus threshold image to outline individual cells
 new_img[edge_canny] = 0
 
+# use to apply basic thresholding after edge detection
+new_img = custom_threshold(new_img, 140)
+
 # apply erosion and dialation to 'open' image and get cells
 kernel = np.ones((5,5))
 # kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(5,5))
@@ -172,25 +187,26 @@ cells = opening != 0
 opening[cells] = 255
 
 # count cells
-labeled_image, count = measure.label(opening, return_num=True)
+labeled_image, count = measure.label(opening, connectivity=1, return_num=True)
 print(count)
 
 # color the counted cells a random color
 colored_labeled_img = color.label2rgb(labeled_image, bg_label=0)
 
-# use_subplots([img, new_img, opening, colored_labeled_img], 
-#              ['original', 'after edge detection applied', 'after opening applied', f'final result: {count} cells'],
-#              ncols=4, nrows=1
-# )
-
 # create transparent image
 trans_image = create_transparent_img(colored_labeled_img)
-
 print('transparent image created')
 
 # combine transparent img with orig
 combine_img = combine_imgs(img, trans_image)
 
+# don't show counts overlayed on original image
+# use_subplots([img, new_img, opening, colored_labeled_img], 
+#              ['original', 'after edge detection applied', 'after opening applied', f'final result: {count} cells'],
+#              ncols=4, nrows=1
+# )
+
+# overlay counted cells on top of original image
 use_subplots([img, new_img, opening, combine_img],
              ['original', 'after edge detection', 'after opening', f'counted {count} cells'],
              ncols=4)
