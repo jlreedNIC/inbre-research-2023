@@ -83,6 +83,7 @@ def use_subplots(imgs:list, titles = [], ncols = 1, nrows=1):
 
 def apply_otsus_threshhold(img):
     blur_img = cv2.GaussianBlur(img, (7,7), 0) # apply blur
+    # blur_img = filters.gaussian(img, sigma = 3.0)
     adj = cv2.convertScaleAbs(blur_img, alpha=.1, beta=100) # enhance contrast and brightness
     
 
@@ -148,12 +149,18 @@ def combine_imgs(orig, new_img):
     
     return combine
 
+def create_image_overlay(colored_cells_img, orig_img):
+    trans_image = create_transparent_img(colored_cells_img)
+    combined = combine_imgs(orig_img, trans_image)
+
+    return combined
 folder_loc = 'nd2_files/'
 file_names = [
     'SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
     'Undamaged-structual-example.nd2', # 58mb 
     'S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2', #40mb
-    'S2-6dpi-uoi2506Tg-1R-#13-sxn2002.nd2' # 70mb
+    'S2-6dpi-uoi2506Tg-1R-#13-sxn2002.nd2', # 70mb
+    '6dpi-uoi2500Tg-3R-#17-sxn6006.nd2'
 ]
 
 with ND2Reader(folder_loc + file_names[2]) as imgs:
@@ -175,7 +182,7 @@ edge_canny[inv_mask] = True
 new_img[edge_canny] = 0
 
 # use to apply basic thresholding after edge detection
-new_img = custom_threshold(new_img, 140)
+new_img = custom_threshold(new_img, 150)
 
 # apply erosion and dialation to 'open' image and get cells
 kernel = np.ones((5,5))
@@ -194,11 +201,8 @@ print(count)
 colored_labeled_img = color.label2rgb(labeled_image, bg_label=0)
 
 # create transparent image
-trans_image = create_transparent_img(colored_labeled_img)
-print('transparent image created')
 
-# combine transparent img with orig
-combine_img = combine_imgs(img, trans_image)
+combine_img = create_image_overlay(colored_labeled_img, img)
 
 # don't show counts overlayed on original image
 # use_subplots([img, new_img, opening, colored_labeled_img], 
