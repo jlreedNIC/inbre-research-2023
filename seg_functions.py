@@ -92,7 +92,9 @@ def custom_threshold(img, threshold=0):
     """
     temp = copy.copy(img)
     if threshold == 0:
-        threshold = np.mean(img)
+        threshold = np.mean(img[img!=0]) * .9
+    
+    print(f'threshold used: {threshold}')
     
     mask = img <= threshold
     temp[mask] = 0
@@ -239,7 +241,7 @@ def process_image(img, save_steps=False):
         titles.append('otsus applied to edge detection')
 
     # apply basic thresholding after edge detection
-    otsus_img = custom_threshold(otsus_img, 140)
+    otsus_img = custom_threshold(otsus_img)
     if save_steps:
         steps.append(copy.copy(otsus_img))
         titles.append('basic threshold')
