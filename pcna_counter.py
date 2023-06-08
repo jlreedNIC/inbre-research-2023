@@ -10,32 +10,60 @@ import seg_functions as sf
 from nd2reader import ND2Reader
 import numpy as np
 
+# testing command line filepath passing
+# import argparse
+
+# parser = argparse.ArgumentParser(description="Program to count PCNA")
+# parser.add_argument('filepath', type=str, help='path to nd2 file')
+# parser.add_argument('-d', '--demo', action='store_true')
+# args = parser.parse_args()
+
+# print(args.filepath, args.demo)
+
 folder_loc = 'nd2_files/'
 file_names = [
-    'SciH-Whole-Ret-4C4-Redd-GFP-DAPI005.nd2', # 4gb
-    'Undamaged-structual-example.nd2', # 58mb 
     'S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2', #40mb
-    'S2-6dpi-uoi2506Tg-1R-#13-sxn2002.nd2', # 70mb
-    '6dpi-uoi2500Tg-3R-#17-sxn6006.nd2'
+    '6dpi-uoi2505Tg-2R-#17-sxn3003.nd2',
+    '6dpi-uoi2505Tg-2R-#17-sxn3002.nd2'
 ]
 
-with ND2Reader(folder_loc + file_names[2]) as imgs:
+demoMode = False
+
+with ND2Reader(folder_loc + file_names[0]) as imgs:
     pcna_imgs = sf.get_imgs_from_channel(imgs, 'far red')
     neuron_imgs = sf.get_imgs_from_channel(imgs, 'DAPI')
 
-# img = sf.compress_stack(pcna_imgs)
-img = pcna_imgs[1]
-img2 = neuron_imgs[1]
+if demoMode:
+    # ----------- demo mode -----------
+    # img = sf.compress_stack(pcna_imgs)
+    img = pcna_imgs[1]
+    img2 = neuron_imgs[1]
 
-labeled_image = sf.process_image(img)
-labeled2 = sf.process_image(img2)
+    labeled_image= sf.process_image(img)
+    labeled2 = sf.process_image(img2)
 
-# create transparent image of cell counts
-combine_img = sf.create_image_overlay(labeled_image, img)
-combine2 = sf.create_image_overlay(labeled2, img2)
+    # create transparent image of cell counts
+    combine_img = sf.create_image_overlay(labeled_image, img)
+    combine2 = sf.create_image_overlay(labeled2, img2)
 
-# overlay counted cells on top of original image
-sf.use_subplots(
-    [img, combine_img, img2, combine2],
-    ['original', f'counted {np.max(labeled_image)} cells', 'neurons', f'coutned {np.max(labeled2)}'],
-    ncols=2, nrows=2)
+    # overlay counted cells on top of original image
+    sf.use_subplots(
+        [img, combine_img, img2, combine2],
+        ['original', f'counted {np.max(labeled_image)} cells', 'neurons', f'counted {np.max(labeled2)}'],
+        ncols=2, nrows=2)
+else:
+    # ------------ debugging use ----------------
+    img = pcna_imgs[1]
+    # img = sf.compress_stack(pcna_imgs)
+    labeled_image, steps, titles = sf.process_image(img, save_steps=True)
+
+    combine_img = sf.create_image_overlay(labeled_image, img)
+
+    steps.append(combine_img)
+    titles.append(f'final result {np.max(labeled_image)}')
+
+    # overlay counted cells on top of original image
+    sf.use_subplots(
+        steps,
+        titles,
+        ncols=round(len(steps)/3), nrows=3)
