@@ -50,11 +50,52 @@ img = pcna_imgs[1]
 # -------------
 
 # ------- testing skimage local threshold
-img = filters.gaussian(img, sigma=1.5)
-local_1 = filters.threshold_local(img, block_size = 3, method = 'mean', offset = 0.0, mode = 'mirror')#, param = 1.5)
-image_1 = img > local_1
+# img = filters.gaussian(img, sigma=1.5)
+# local_1 = filters.threshold_local(img, block_size = 3, method = 'mean', offset = 0.0, mode = 'mirror')#, param = 1.5)
+# image_1 = img > local_1
 
-# apply binary mask
-img[image_1==0]=0
-sf.use_subplots([img, image_1])
+# # apply binary mask
+# img[image_1==0]=0
+# sf.use_subplots([img, image_1])
 # -------- 
+
+# ------------ testing edge masking
+# _, mask = sf.apply_skimage_otsu(img)
+# otsu_mask = sf.copy.copy(mask)
+# otsu_mask[mask==0] = 1
+# otsu_mask[mask==1] = 0
+# edges_1 = sf.feature.canny(img, sigma=1.5)
+# edges_2 = sf.feature.canny(img, sigma=1.5, mask=otsu_mask)
+
+
+# sf.use_subplots([img, edges_1, edges_2], ncols=3)
+# ---------------
+
+# --------- testing edge sigma values
+# edges_1 = sf.feature.canny(img, sigma=0.5)
+# edges_2 = sf.feature.canny(img, sigma=1.5)
+# edges_3 = sf.feature.canny(img, sigma=2.5)
+
+
+# sf.use_subplots([img, edges_1, edges_2, edges_3], ncols=4)
+# -------------------------------
+
+# ---------- testing edge on orig, unsharped, blurred, thresholded
+# img = filters.gaussian(img, sigma=2.0)
+
+# otsu_img, otsu_mask = sf.apply_skimage_otsu(img)
+# local_img, local_mask = sf.apply_local_threshold(img)
+# unsharp_img = sf.apply_unsharp_filter(img)
+
+# edge_1 = sf.get_edges(img)
+# edge_2 = sf.get_edges(otsu_img)
+# edge_3 = sf.get_edges(local_img)
+# edge_4 = sf.get_edges(unsharp_img)
+
+# sf.use_subplots(
+#     [img, otsu_img, local_img, unsharp_img, edge_1, edge_2, edge_3, edge_4],
+#     ['orig', 'otsu', 'local', 'unsharp', 'orig edge', 'otsu edge', 'local edge', 'unsharp edge'],
+#     ncols=4, nrows=2
+# )
+
+# ------------------
