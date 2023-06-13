@@ -63,6 +63,23 @@ def get_edges(img):
 
     return edges
 
+def apply_unsharp_filter(img):
+    unsharp = filters.unsharp_mask(img, radius = 5, amount = 20.0)
+    # put blur on unsharp
+    blurred = filters.gaussian(unsharp, sigma=1.5)
+
+    return blurred
+
+def apply_local_threshold(img):
+    img = filters.gaussian(img, sigma=1.5)
+    local = filters.threshold_local(img, block_size=3, method='mean', offset = 0.0, mode="mirror")
+    mask = img > local
+
+    # apply mask
+    img[mask==0] = 0
+
+    return img, mask
+
 def apply_otsus_threshold(img):
     """Applies Otsu's Thresholding method to an image. 
     First applies a Gaussian Blur, then enhances the brightness and 
@@ -84,19 +101,17 @@ def apply_otsus_threshold(img):
     return adj, otsu_mask
 
 def apply_skimage_otsu(img):
-    img = filters.gaussian(img, sigma=1.5)
+    temp = copy.copy(img)
+    otsu_1 = filters.threshold_otsu(temp)
+    mask = temp <= otsu_1 
+    temp[mask] = 0
 
-    otsu_1 = filters.threshold_otsu(img)
-    mask = img <= otsu_1 
-    img[mask] = 0
+    return temp, mask
 
-    return img, mask
-
-def apply_multi_otsu(img):
-    img = filters.gaussian(img, sigma=1.5)
-    thresholds = filters.threshold_multiotsu(img)
+def apply_multi_otsu(img, c = 3):
+    thresholds = filters.threshold_multiotsu(img, c)
     regions = np.digitize(img, bins=thresholds)
-    mask = regions!=2
+    mask = regions!=(c-1)
     img[mask] = 0
 
     return img, mask

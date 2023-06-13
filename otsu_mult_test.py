@@ -9,7 +9,8 @@
 
 import seg_functions as sf
 from nd2reader import ND2Reader
-from skimage import filters
+from skimage import filters, morphology, measure
+from copy import copy
 
 folder_loc = 'nd2_files/'
 file_names = [
@@ -26,82 +27,68 @@ with ND2Reader(folder_loc + file_names[2]) as imgs:
 
 img = pcna_imgs[1]
 
-# ----- comparing opencv otsu to skimage otsu
-# otsu_current, _ = sf.apply_otsus_threshold(img)
-
-# img = sf.filters.gaussian(img, sigma=1.5)
-
-# otsu_1 = sf.filters.threshold_otsu(img)
-# mask = img <= otsu_1 
-# img[mask] = 0
-# print(otsu_1)
-
-# sf.use_subplots([otsu_current, img])
-# --------------
-
-# ----- testing multi otsu
-# img = filters.gaussian(img, sigma=1.5)
-# numc=4
-# thresholds = filters.threshold_multiotsu(img,classes=numc)
-# regions = sf.np.digitize(img, bins=thresholds)
-# mask = regions==(numc-1)
-# import copy
-# temp = copy.copy(img)
-# temp[mask] = 0
-
-# sf.use_subplots([img, regions, temp], ncols=3)
-# -------------
-
-# ------- testing skimage local threshold
-# img = filters.gaussian(img, sigma=1.5)
-
-
-# -------- 
-
 # ---- unsharp mask and edge detection
 
-# img = filters.gaussian(img, sigma=1.5)
-unsharp_1 = filters.unsharp_mask(img, radius = 5, amount=20.0)
-blurred_unsharp = filters.gaussian(unsharp_1, sigma = 1.5)
-edge_1 = sf.feature.canny(blurred_unsharp)
-edge_2 = sf.filters.sobel(blurred_unsharp)
+imgs = []
+titles = []
 
-# sf.use_subplots([img, unsharp_1, blurred_unsharp, edge_1, edge_2], ncols=5)
 
+imgs.append(copy(img))
+titles.append("original")
+
+# apply unsharp mask to original image
+blurred_unsharp = sf.apply_unsharp_filter(img)
+imgs.append(copy(blurred_unsharp))
+titles.append("blur unsharp")
+
+# blur original image, find edges, then apply to unsharped blurred image
 img = filters.gaussian(img, sigma=1.5)
-edge_3 = sf.feature.canny(img)
-blurred_unsharp[edge_3] = 0
+edges = sf.get_edges(img)
+imgs.append(copy(edges))
+titles.append('edges on orig')
 
-# sf.use_subplots([img, blurred_unsharp, edge_3], ncols=3)
+blurred_unsharp[edges] = 0
+imgs.append(copy(blurred_unsharp))
+titles.append('unsharp with edge')
 
-# apply opening after unsharp edge detection
-# from skimage import morphology
+# apply otsu to original image, then use that threshold to mask the blurred unsharp
+_, otsu_mask = sf.apply_skimage_otsu(img)
+blurred_unsharp[otsu_mask] = 0
+imgs.append(copy(blurred_unsharp))
+titles.append('otsu to unsharped')
 
-# opened = morphology.opening(blurred_unsharp)
-# sf.use_subplots([img, blurred_unsharp, opened], ncols=3)
+# apply local threshold on orig then apply to blurred unsharp to get rid of more background
+_, local_mask = sf.apply_local_threshold(img)
+blurred_unsharp[local_mask==0] = 0
 
-otsu_2 = sf.filters.threshold_otsu(img)
-mask_2 = img <= otsu_2
-blurred_unsharp[mask_2] = 0
+imgs.append(copy(local_mask))
+titles.append("local threshold on orig")
 
-# sf.use_subplots([img, blurred_unsharp], ncols=3)
+imgs.append(copy(blurred_unsharp))
+titles.append("local threshold applied to unsharped")
 
-from skimage import morphology, measure
 
+# apply opening morph function to separate cells better
 opened = morphology.opening(blurred_unsharp)
-# sf.use_subplots([img, blurred_unsharp, opened], ncols=3)
+imgs.append(copy(opened))
+titles.append("opened unsharped")
 
-thresholds = filters.threshold_multiotsu(opened,classes=3)
-regions = sf.np.digitize(opened, bins=thresholds)
-mask = regions!=(3-1)
-import copy
-temp = copy.copy(opened)
-temp[mask] = 0
-temp[temp!=0] = 1
+# apply multi otsu on opened image, then apply mask to opened
+opened, _ = sf.apply_multi_otsu(opened)
+# anything not black is now white
+opened[opened!=0] = 1
+imgs.append(copy(opened))
+titles.append("multi otsu applied to opened")
 
-labeled_image, count = measure.label(temp, connectivity=1, return_num=True)
+# count binary image
+labeled_image, count = measure.label(opened, connectivity=1, return_num=True)
 print(count)
 
+# overlay colored counts on orig image
 colored_img = sf.create_image_overlay(labeled_image, img)
+imgs.append(copy(colored_img))
+titles.append(f'final result: {count}')
 
-sf.use_subplots([img, blurred_unsharp, opened, temp, colored_img], ncols=5)
+print(len(imgs))
+
+sf.use_subplots(imgs,titles, ncols=round(len(imgs)/3)+1, nrows=3)
