@@ -83,6 +83,24 @@ def apply_otsus_threshold(img):
 
     return adj, otsu_mask
 
+def apply_skimage_otsu(img):
+    img = filters.gaussian(img, sigma=1.5)
+
+    otsu_1 = filters.threshold_otsu(img)
+    mask = img <= otsu_1 
+    img[mask] = 0
+
+    return img, mask
+
+def apply_multi_otsu(img):
+    img = filters.gaussian(img, sigma=1.5)
+    thresholds = filters.threshold_multiotsu(img)
+    regions = np.digitize(img, bins=thresholds)
+    mask = regions!=2
+    img[mask] = 0
+
+    return img, mask
+
 def custom_threshold(img, threshold=0):
     """Applies a basic thresholding by zeroing any pixel less than the given value
 
