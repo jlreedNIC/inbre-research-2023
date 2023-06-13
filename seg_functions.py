@@ -10,9 +10,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import datetime as dt
-import copy
+from copy import copy
 
-from skimage import filters, feature, color, measure
+from skimage import filters, feature, color, measure, morphology
 
     
 def open_nd2file(filepath:str, channel_name:str):
@@ -59,7 +59,7 @@ def compress_stack(img_stack:list):
     return new_arr
 
 def get_edges(img):
-    edges = feature.canny(img, sigma=1.5)
+    edges = feature.canny(img, sigma=2.5)
 
     return edges
 
@@ -101,7 +101,7 @@ def apply_otsus_threshold(img):
     return adj, otsu_mask
 
 def apply_skimage_otsu(img):
-    temp = copy.copy(img)
+    temp = copy(img)
     otsu_1 = filters.threshold_otsu(temp)
     mask = temp <= otsu_1 
     temp[mask] = 0
@@ -123,7 +123,7 @@ def custom_threshold(img, threshold=0):
     :param int val: threshold value to 0 out, defaults to 0
     :return array: image after thresholding applied
     """
-    temp = copy.copy(img)
+    temp = copy(img)
     if threshold == 0:
         threshold = np.mean(img[img!=0]) * .9
     
@@ -246,13 +246,13 @@ def process_image(img, save_steps=False):
         steps = []
         titles = []
 
-        steps.append(copy.copy(img))
+        steps.append(copy(img))
         titles.append('original')
     
     # apply edge detection to orig
     edge_canny = feature.canny(img, sigma=1.5)
     if save_steps:
-        steps.append(copy.copy(edge_canny))
+        steps.append(copy(edge_canny))
         titles.append('edge detection')
 
         print('edge detection done')
@@ -260,7 +260,7 @@ def process_image(img, save_steps=False):
     # apply otsus to orig
     otsus_img, inv_mask = apply_otsus_threshold(img)
     if save_steps:
-        steps.append(copy.copy(otsus_img))
+        steps.append(copy(otsus_img))
         titles.append('orig with otsus')
 
         print('otsus threshold done')
@@ -270,13 +270,13 @@ def process_image(img, save_steps=False):
     # overlay edges onto otsus to outline cells
     otsus_img[edge_canny] = 0
     if save_steps:
-        steps.append(copy.copy(otsus_img))
+        steps.append(copy(otsus_img))
         titles.append('otsus applied to edge detection')
 
     # apply basic thresholding after edge detection
     otsus_img = custom_threshold(otsus_img)
     if save_steps:
-        steps.append(copy.copy(otsus_img))
+        steps.append(copy(otsus_img))
         titles.append('basic threshold')
 
         print('basic threshold done')
@@ -312,3 +312,65 @@ def process_image(img, save_steps=False):
         return labeled_image, steps, titles
     else:
         return labeled_image
+
+def new_imp_process(img, save_steps=False):
+    if save_steps:
+        steps = []
+        titles = []
+
+        steps.append(copy(img))
+        titles.append('original')
+
+    # unsharp to original
+    progress_img = apply_unsharp_filter(img)
+    if save_steps:
+        steps.append(copy(progress_img))
+        titles.append('unsharp on orig')
+    
+    # blur orig, find edges on orig, then apply to progress
+    blur_img = filters.gaussian(img, sigma=2.0)
+    edges = get_edges(blur_img)
+    progress_img[edges] = 0
+    if save_steps:
+        steps.append(copy(progress_img))
+        titles.append('edges on orig to progress')
+
+    # apply otsu to orig, then apply to progress
+    _, otsu_mask = apply_skimage_otsu(blur_img)
+    progress_img[otsu_mask] = 0
+    if save_steps:
+        steps.append(copy(progress_img))
+        titles.append('otsu on orig to progress')
+    
+    # apply local on orig, then to progress (gets rid of more background)
+    _, local_mask = apply_local_threshold(blur_img)
+    progress_img[local_mask==0] = 0
+    if save_steps:
+        steps.append(copy(local_mask))
+        titles.append('local thresholding on orig')
+        steps.append(copy(progress_img))
+        titles.append('local to progress')
+
+    # apply opening morph to separate cells better
+    progress_img = morphology.opening(progress_img)
+    if save_steps:
+        steps.append(copy(progress_img))
+        titles.append('opening progress')
+
+    # apply multi otsu on opened, then to opened
+    progress_img, _ = apply_multi_otsu(progress_img)
+    progress_img[progress_img!=0] = 1
+    if save_steps:
+        steps.append(copy(progress_img))
+        titles.append('multi otsu applied')
+
+    # count binary image
+    final_image, count = measure.label(progress_img, connectivity=1, return_num=True)
+    if save_steps:
+        steps.append(copy(final_image))
+        titles.append(f'final result: {count}')
+
+    if save_steps:
+        return final_image, steps, titles
+    else:
+        return final_image
