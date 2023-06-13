@@ -352,7 +352,7 @@ def new_imp_process(img, save_steps=False):
         titles.append('local to progress')
 
     # apply opening morph to separate cells better
-    progress_img = morphology.opening(progress_img)
+    progress_img = morphology.opening(progress_img)#, morphology.disk(2))
     if save_steps:
         steps.append(copy(progress_img))
         titles.append('opening progress')
