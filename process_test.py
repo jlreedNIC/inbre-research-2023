@@ -21,7 +21,7 @@ file_names = [
 
 demoMode = True
 
-with ND2Reader(folder_loc + file_names[2]) as imgs:
+with ND2Reader(folder_loc + file_names[0]) as imgs:
     pcna_imgs = sf.get_imgs_from_channel(imgs, 'far red')
     neuron_imgs = sf.get_imgs_from_channel(imgs, 'DAPI')
 
