@@ -19,6 +19,11 @@ file_names = [
     '6dpi-uoi2505Tg-2R-#17-sxn3002.nd2'
 ]
 
+import os
+
+# get all files from nd2 files dir
+all_files = os.listdir(folder_loc)
+
 demoMode = True
 
 with ND2Reader(folder_loc + file_names[0]) as imgs:
@@ -42,18 +47,31 @@ with ND2Reader(folder_loc + file_names[0]) as imgs:
 
 # ---- unsharp mask and edge detection
 
-img = pcna_imgs[1]
+dapi_stack = sf.compress_stack(neuron_imgs)
+# img = neuron_imgs[1]
+pcna_stack = sf.compress_stack(pcna_imgs)
+# img = pcna_imgs[1]
 
 if demoMode:
-    labeled_image = sf.new_imp_process(img)
-    count = sf.np.max(labeled_image)
-    colored_img = sf.create_image_overlay(labeled_image, img)
+    dapi_labeled = sf.new_imp_process(dapi_stack)
+    pcna_labeled = sf.new_imp_process(pcna_stack)
+    result = sf.combine_channels(pcna_labeled, dapi_labeled)
 
-    sf.use_subplots([img, colored_img], ['original', f'final result: {count}'])
+    dapi_count = sf.np.max(dapi_labeled)
+    pcna_count = sf.np.max(pcna_labeled)
+    f_count = sf.np.max(result)
+
+    dapi_colored = sf.create_image_overlay(dapi_labeled, dapi_stack)
+    pcna_colored = sf.create_image_overlay(pcna_labeled, pcna_stack)
+    f_color = sf.create_image_overlay(result, pcna_stack)
+
+    sf.use_subplots([dapi_stack, dapi_colored, pcna_stack, pcna_colored, f_color], 
+                    ['dapi orig', f'dapi result: {dapi_count}', 'pcna orig', f'pcna result: {pcna_count}', f'final result: {f_count}'],
+                    ncols=5, nrows=1)
 else:
-    labeled_image, steps, titles = sf.new_imp_process(img, True)
+    labeled_image, steps, titles = sf.new_imp_process(dapi_stack, True)
     # overlay colored counts on orig image
-    colored_img = sf.create_image_overlay(labeled_image, img)
+    colored_img = sf.create_image_overlay(labeled_image, dapi_stack)
     count = sf.np.max(labeled_image)
     steps.append(colored_img)
     titles.append(f'final image {count}')
