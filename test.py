@@ -102,38 +102,38 @@ img = pcna_imgs[1]
 
 # ---------- testing efficient image combination
 
-labeled_image = sf.new_imp_process(img)
+# labeled_image = sf.new_imp_process(img)
 
-colored_labeled_img = sf.color.label2rgb(labeled_image, bg_label=0)
-from skimage import color
+# colored_labeled_img = sf.color.label2rgb(labeled_image, bg_label=0)
+# from skimage import color
 
 # gray_img = color.gray2rgb(img)/255
 
 # colored = colored_labeled_img != [0,0,0]
 # gray_img[colored] = colored_labeled_img[colored]
 
-gray_img = color.gray2rgb(img).astype(int)
-colored_labeled_img = (colored_labeled_img * 255).astype(int)
+# gray_img = color.gray2rgb(img).astype(int)
+# colored_labeled_img = (colored_labeled_img * 255).astype(int)
 
-start = sf.dt.datetime.now()
-# find where colors are
-colored = colored_labeled_img != [0,0,0]
-# find where colors aren't by performing OR on above
-non_c = sf.np.any(colored, 2)
-non_c = sf.np.invert(non_c)
+# start = sf.dt.datetime.now()
+# # find where colors are
+# colored = colored_labeled_img != [0,0,0]
+# # find where colors aren't by performing OR on above
+# non_c = sf.np.any(colored, 2)
+# non_c = sf.np.invert(non_c)
 
 # don't have to create new array
 # colored_labeled_img[non_c] = gray_img[non_c]
 
 # create new array
-new_img = sf.np.zeros(gray_img.shape)
-new_img[colored] = colored_labeled_img[colored]
-new_img[non_c] = gray_img[non_c]
+# new_img = sf.np.zeros(gray_img.shape)
+# new_img[colored] = colored_labeled_img[colored]
+# new_img[non_c] = gray_img[non_c]
 
-new_img = new_img.astype(int)
+# new_img = new_img.astype(int)
 
-stop = sf.dt.datetime.now()
-print(f'time: {stop-start}')
+# stop = sf.dt.datetime.now()
+# print(f'time: {stop-start}')
 
 # start = sf.dt.datetime.now()
 # new_img = sf.np.zeros(gray_img.shape)
@@ -150,5 +150,37 @@ print(f'time: {stop-start}')
 # stop = sf.dt.datetime.now()
 # print(f'time: {stop-start}')
 
-sf.use_subplots([img, gray_img, colored_labeled_img, new_img], ncols=4)
+# sf.use_subplots([img, gray_img, colored_labeled_img, new_img], ncols=4)
 # ------------------
+
+# ------------- testing overlapping cells
+pcna_stack = sf.compress_stack(pcna_imgs)
+dapi_stack = sf.compress_stack(neuron_imgs)
+
+# process images
+
+labeled_pcna = sf.new_imp_process(pcna_stack)
+labeled_dapi = sf.new_imp_process(dapi_stack)
+
+pcna_color = sf.create_image_overlay(labeled_pcna, pcna_stack)
+dapi_color = sf.create_image_overlay(labeled_dapi, dapi_stack)
+
+img_and = sf.np.logical_and(labeled_pcna, labeled_dapi)
+
+final_image, count = sf.measure.label(img_and, connectivity=1, return_num=True)
+pcnacount = sf.np.max(labeled_pcna)
+dapicount = sf.np.max(labeled_dapi)
+
+size = 7
+final_image = sf.morphology.remove_small_objects(final_image, min_size=size)
+final_image, count = sf.measure.label(final_image, connectivity=1, return_num=True)
+
+
+colored = sf.create_image_overlay(final_image, pcna_stack)
+
+# plot
+sf.use_subplots(
+    [pcna_stack, pcna_color, dapi_stack, dapi_color, img_and, colored], 
+    ['pcna orig', f'counted pcna {pcnacount}', 'dapi orig', f'counted dapi {dapicount}', 'anded together', f'final count: {count}'],
+    ncols=3, nrows=2
+)
