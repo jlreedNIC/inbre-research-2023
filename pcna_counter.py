@@ -39,8 +39,8 @@ if demoMode:
     img = pcna_imgs[1]
     img2 = neuron_imgs[1]
 
-    labeled_image= sf.process_image(img)
-    labeled2 = sf.process_image(img2)
+    labeled_image= sf.new_imp_process(img)
+    labeled2 = sf.new_imp_process(img2)
 
     # create transparent image of cell counts
     combine_img = sf.create_image_overlay(labeled_image, img)
@@ -55,7 +55,7 @@ else:
     # ------------ debugging use ----------------
     img = pcna_imgs[1]
     # img = sf.compress_stack(pcna_imgs)
-    labeled_image, steps, titles = sf.process_image(img, save_steps=True)
+    labeled_image, steps, titles = sf.new_imp_process(img, save_steps=True)
 
     combine_img = sf.create_image_overlay(labeled_image, img)
 
@@ -63,7 +63,12 @@ else:
     titles.append(f'final result {np.max(labeled_image)}')
 
     # overlay counted cells on top of original image
+
+    cols = 3 * round(len(steps)/3)
+    if cols < len(steps):
+        cols += 3
+
     sf.use_subplots(
         steps,
         titles,
-        ncols=round(len(steps)/3), nrows=3)
+        ncols=int(cols/3), nrows=3)
