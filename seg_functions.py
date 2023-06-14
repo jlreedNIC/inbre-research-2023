@@ -453,3 +453,35 @@ def new_imp_process(img, save_steps=False):
         return final_image, steps, titles
     else:
         return final_image
+
+def combine_channels(pcna_img, dapi_img, save_steps = False):
+    # pcna and dapi images must be labeled!
+
+    # find areas where both pictures have content
+    img_and = np.logical_and(pcna_img, dapi_img)
+    if save_steps:
+        steps = [copy(img_and)]
+        titles = ['pcna AND dapi']
+        print('Combined images using logical AND operation.')
+
+    # label and count
+    img_and, count = measure.label(img_and, connectivity=1, return_num=True)
+    if save_steps:
+        steps.append(copy(img_and))
+        titles.append(f'counted {count}')
+        print(f'Counted image: {count} cells')
+
+    # remove small artifacts
+    size = 7
+    img_and = morphology.remove_small_objects(img_and, min_size=size)
+    # relabel
+    img_and, count = measure.label(img_and, connectivity=1, return_num=True)
+    if save_steps:
+        steps.append(copy(img_and))
+        titles.append(f'removed artifacts < {size}')
+        print(f'Removed artifacts smaller than {size} and recounted: {count} cells')
+
+    if save_steps:
+        return img_and, steps, titles
+    else:
+        return img_and
