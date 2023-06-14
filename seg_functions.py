@@ -346,16 +346,16 @@ def new_imp_process(img, save_steps=False):
     _, local_mask = apply_local_threshold(blur_img)
     progress_img[local_mask==0] = 0
     if save_steps:
-        steps.append(copy(local_mask))
-        titles.append('local thresholding on orig')
         steps.append(copy(progress_img))
         titles.append('local to progress')
 
     # apply opening morph to separate cells better
-    progress_img = morphology.opening(progress_img)#, morphology.disk(2))
+    # progress_img = morphology.opening(progress_img)#, morphology.disk(3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
+    progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=1)
     if save_steps:
         steps.append(copy(progress_img))
-        titles.append('opening progress')
+        titles.append('opening applied')
 
     # apply multi otsu on opened, then to opened
     progress_img, _ = apply_multi_otsu(progress_img)
@@ -369,6 +369,14 @@ def new_imp_process(img, save_steps=False):
     if save_steps:
         steps.append(copy(final_image))
         titles.append(f'final result: {count}')
+    
+    # remove small objects and relabel array
+    size = 10
+    final_image = morphology.remove_small_objects(final_image, min_size=size)
+    final_image, count = measure.label(final_image, connectivity=1, return_num=True)
+    if save_steps:
+        steps.append(copy(final_image))
+        titles.append(f'artifacts removed <= {size}')
 
     if save_steps:
         return final_image, steps, titles
