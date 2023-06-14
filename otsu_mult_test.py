@@ -19,15 +19,30 @@ file_names = [
     '6dpi-uoi2505Tg-2R-#17-sxn3002.nd2'
 ]
 
-demoMode = False
+demoMode = True
 
 with ND2Reader(folder_loc + file_names[2]) as imgs:
     pcna_imgs = sf.get_imgs_from_channel(imgs, 'far red')
     neuron_imgs = sf.get_imgs_from_channel(imgs, 'DAPI')
 
-img = pcna_imgs[1]
+# ---- looping through every image
+# if demoMode:
+#     for i in range(0, len(pcna_imgs)):
+#         img = pcna_imgs[i]
+#         img2 = neuron_imgs[i]
+
+#         labeled_image = sf.new_imp_process(img)
+#         labeled_image2 = sf.new_imp_process(img2)
+#         count = sf.np.max(labeled_image)
+#         count2 = sf.np.max(labeled_image2)
+#         colored_img = sf.create_image_overlay(labeled_image, img)
+#         colored_img2 = sf.create_image_overlay(labeled_image2, img2)
+
+#         sf.use_subplots([img, colored_img, img2, colored_img2], ['pcna orig', f'final result: {count}', 'DAPI orig', f'final: {count2}'], nrows = 2)
 
 # ---- unsharp mask and edge detection
+
+img = pcna_imgs[1]
 
 if demoMode:
     labeled_image = sf.new_imp_process(img)
