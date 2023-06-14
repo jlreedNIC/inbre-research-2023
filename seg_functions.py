@@ -59,11 +59,25 @@ def compress_stack(img_stack:list):
     return new_arr
 
 def get_edges(img):
+    """
+    Applies canny edge detection to image and returns boolean image containing edges found.
+    Sigma applied for Gaussian step is set to 2.5
+
+    :param img: Image to apply edge detection to. Does not need blur
+    :return: boolean image of edges
+    """
     edges = feature.canny(img, sigma=2.5)
 
     return edges
 
 def apply_unsharp_filter(img):
+    """
+    Applies the unsharp mask filter with a radius of 5 and amount of 20 to image.
+    Then applies gaussian blur (sigma 1.5) to clean it up
+
+    :param img: image to apply filter to, numpy array preferred
+    :return:    image, numpy array
+    """
     unsharp = filters.unsharp_mask(img, radius = 5, amount = 20.0)
     # put blur on unsharp
     blurred = filters.gaussian(unsharp, sigma=1.5)
@@ -71,6 +85,14 @@ def apply_unsharp_filter(img):
     return blurred
 
 def apply_local_threshold(img):
+    """
+    applies gaussian blur (sigma 1.5), then applies a local thresholding technique.
+    Block size for local is 3, method is 'mean', and offset is 0.0. 
+
+    :param img: image, numpy array preferred
+    :return:    image with local threshold mask applied
+                mask produced by local threshold
+    """
     img = filters.gaussian(img, sigma=1.5)
     local = filters.threshold_local(img, block_size=3, method='mean', offset = 0.0, mode="mirror")
     mask = img > local
@@ -101,6 +123,14 @@ def apply_otsus_threshold(img):
     return adj, otsu_mask
 
 def apply_skimage_otsu(img):
+    """
+    Creates copy of image to apply Otsu's thresholding implemented by skimage. 
+    Applies the Otsu mask to the image
+
+    :param img: Image to apply algo to, numpy array preferred
+    :return:    image with mask applied
+                binary mask
+    """
     temp = copy(img)
     otsu_1 = filters.threshold_otsu(temp)
     mask = temp <= otsu_1 
@@ -109,6 +139,15 @@ def apply_skimage_otsu(img):
     return temp, mask
 
 def apply_multi_otsu(img, c = 3):
+    """
+    Applies Multi Otsu thresholding to break image up into 3 sections (background, middle ground, foreground). 
+    Applies mask to hide anything not in the foreground
+
+    :param img: image, numpy array preferred
+    :param c:   classes or section to break image up into, defaults to 3
+    :return:    image with mask applied
+                binary mask
+    """
     thresholds = filters.threshold_multiotsu(img, c)
     regions = np.digitize(img, bins=thresholds)
     mask = regions!=(c-1)
@@ -171,7 +210,7 @@ def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1):
     plt.show()
 
 def create_transparent_img(orig):
-    """Converts an RGB image into RGBA and makes all black pixels transparent.
+    """Converts an RGB image into RGBA and makes all black pixels transparent by looping through image.
 
     :param array orig: image in array format with shape (h,w,3)
     :return array: image with shape (h,w,4)
@@ -196,7 +235,7 @@ def create_transparent_img(orig):
     return transparent
 
 def combine_imgs(orig, new_img):
-    """Combines an image in gray scale with an image with a transparent background into a single image to create an overlay.
+    """Combines an image in gray scale with an image with a transparent background into a single image to create an overlay by looping through images.
 
     :param array orig: image in array format with shape (h,w)
     :param array new_img: image in array with shape (h,w,4)
@@ -222,12 +261,13 @@ def combine_imgs(orig, new_img):
     return combine
 
 def create_image_overlay(labeled_image, orig_img):
-    """Calls 3 functions to create an rgb image, make an image have a transparent background, then overlay the two images.
+    """Combines two images by first creating an rbg image from the labeled image, 
+    then overlaying the original image onto the colored image wherever the colored image is black.
     Continuation of process image function.
 
-    :param array labeled_image: array containing labels from count functionarray of shape(h,w,4)
+    :param array labeled_image: array containing labels from count function; array of shape(h,w)
     :param array orig_img: array of shape (h,w)
-    :return array: array of shape (h,w,4)
+    :return array: array of shape (h,w,3)
     """
     # color the counted cells a random color
     print('coloring started')
@@ -236,7 +276,7 @@ def create_image_overlay(labeled_image, orig_img):
 
     start = dt.datetime.now()
     # convert original image to grayscale and scale down brightness
-    gray_img = color.gray2rgb(orig_img/255) - .15
+    gray_img = color.gray2rgb(orig_img/255) - .25
     colored_labeled_img = colored_labeled_img
 
     # find where colors are
@@ -253,8 +293,6 @@ def create_image_overlay(labeled_image, orig_img):
     stop = dt.datetime.now()
     print(f'time for image combination: {stop-start}')
     return colored_labeled_img
-
-    
 
 def process_image(img, save_steps=False):
     if save_steps:
@@ -329,6 +367,15 @@ def process_image(img, save_steps=False):
         return labeled_image
 
 def new_imp_process(img, save_steps=False):
+    """
+    Applies filters to image in order to count the cells in the image. Can also return images of each step applied
+
+    :param img: numpy array of scalar values; shape (h,w)
+    :param save_steps: boolean whether or not to return intermediary images, defaults to False
+    :return: labeled counted image as numpy array
+                list of intermediary images (OPT)
+                list of image titles (OPT)
+    """
     if save_steps:
         steps = []
         titles = []
