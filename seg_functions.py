@@ -382,12 +382,14 @@ def new_imp_process(img, save_steps=False):
 
         steps.append(copy(img))
         titles.append('original')
+        print('Starting processing.')
 
     # unsharp to original
     progress_img = apply_unsharp_filter(img)
     if save_steps:
         steps.append(copy(progress_img))
         titles.append('unsharp on orig')
+        print('Unsharp filter applied.')
     
     # blur orig, find edges on orig, then apply to progress
     blur_img = filters.gaussian(img, sigma=2.0)
@@ -396,6 +398,7 @@ def new_imp_process(img, save_steps=False):
     if save_steps:
         steps.append(copy(progress_img))
         titles.append('edges on orig to progress')
+        print('Edges found.')
 
     # apply otsu to orig, then apply to progress
     _, otsu_mask = apply_skimage_otsu(blur_img)
@@ -403,6 +406,7 @@ def new_imp_process(img, save_steps=False):
     if save_steps:
         steps.append(copy(progress_img))
         titles.append('otsu on orig to progress')
+        print("Otsu's threshold applied.")
     
     # apply local on orig, then to progress (gets rid of more background)
     _, local_mask = apply_local_threshold(blur_img)
@@ -410,6 +414,7 @@ def new_imp_process(img, save_steps=False):
     if save_steps:
         steps.append(copy(progress_img))
         titles.append('local to progress')
+        print("Local threshold applied.")
 
     # apply opening morph to separate cells better
     # progress_img = morphology.opening(progress_img)#, morphology.disk(3))
@@ -418,6 +423,7 @@ def new_imp_process(img, save_steps=False):
     if save_steps:
         steps.append(copy(progress_img))
         titles.append('opening applied')
+        print("Morphological opening applied.")
 
     # apply multi otsu on opened, then to opened
     progress_img, _ = apply_multi_otsu(progress_img)
@@ -425,12 +431,14 @@ def new_imp_process(img, save_steps=False):
     if save_steps:
         steps.append(copy(progress_img))
         titles.append('multi otsu applied')
+        print("Multi Otsu threshold applied (separated background from foreground).")
 
     # count binary image
     final_image, count = measure.label(progress_img, connectivity=1, return_num=True)
     if save_steps:
         steps.append(copy(final_image))
         titles.append(f'final result: {count}')
+        print(f'Image segmented. {count} cells counted.')
     
     # remove small objects and relabel array
     size = 10
@@ -439,6 +447,7 @@ def new_imp_process(img, save_steps=False):
     if save_steps:
         steps.append(copy(final_image))
         titles.append(f'artifacts removed <= {size}')
+        print(f'Small objects smaller than {size} in size removed.')
 
     if save_steps:
         return final_image, steps, titles
