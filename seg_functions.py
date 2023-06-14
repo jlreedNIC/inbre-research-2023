@@ -234,12 +234,27 @@ def create_image_overlay(labeled_image, orig_img):
     colored_labeled_img = color.label2rgb(labeled_image, bg_label=0)
     print('cells colored')
 
-    trans_image = create_transparent_img(colored_labeled_img)
-    print('transparent img created')
-    combined = combine_imgs(orig_img, trans_image)
-    print('combined image created')
+    start = dt.datetime.now()
+    # convert original image to grayscale and scale down brightness
+    gray_img = color.gray2rgb(orig_img/255) - .15
+    colored_labeled_img = colored_labeled_img
 
-    return combined
+    # find where colors are
+    colored = colored_labeled_img != [0,0,0]
+    # find where colors aren't by performing OR on above
+    non_c = np.any(colored, 2)
+    non_c = np.invert(non_c)
+
+    # don't have to create new array
+    # set non colored parts to original image
+    colored_labeled_img[non_c] = gray_img[non_c]
+
+    # new_img = new_img.astype(int)
+    stop = dt.datetime.now()
+    print(f'time for image combination: {stop-start}')
+    return colored_labeled_img
+
+    
 
 def process_image(img, save_steps=False):
     if save_steps:
