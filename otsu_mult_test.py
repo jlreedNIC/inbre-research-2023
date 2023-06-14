@@ -19,13 +19,13 @@ file_names = [
     '6dpi-uoi2505Tg-2R-#17-sxn3002.nd2'
 ]
 
-demoMode = True
+demoMode = False
 
-with ND2Reader(folder_loc + file_names[0]) as imgs:
+with ND2Reader(folder_loc + file_names[2]) as imgs:
     pcna_imgs = sf.get_imgs_from_channel(imgs, 'far red')
     neuron_imgs = sf.get_imgs_from_channel(imgs, 'DAPI')
 
-img = neuron_imgs[1]
+img = pcna_imgs[1]
 
 # ---- unsharp mask and edge detection
 
@@ -39,8 +39,12 @@ else:
     labeled_image, steps, titles = sf.new_imp_process(img, True)
     # overlay colored counts on orig image
     colored_img = sf.create_image_overlay(labeled_image, img)
+    count = sf.np.max(labeled_image)
     steps.append(colored_img)
-    titles.append('final image')
+    titles.append(f'final image {count}')
     print(len(steps))
 
-    sf.use_subplots(steps,titles, ncols=round(len(steps)/3)+1, nrows=3)
+    cols = 3 * round(len(steps)/3)
+    if cols < len(steps):
+        cols += 3
+    sf.use_subplots(steps,titles, ncols=int(cols/3), nrows=3)
