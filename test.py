@@ -99,3 +99,56 @@ img = pcna_imgs[1]
 # )
 
 # ------------------
+
+# ---------- testing efficient image combination
+
+labeled_image = sf.new_imp_process(img)
+
+colored_labeled_img = sf.color.label2rgb(labeled_image, bg_label=0)
+from skimage import color
+
+# gray_img = color.gray2rgb(img)/255
+
+# colored = colored_labeled_img != [0,0,0]
+# gray_img[colored] = colored_labeled_img[colored]
+
+gray_img = color.gray2rgb(img).astype(int)
+colored_labeled_img = (colored_labeled_img * 255).astype(int)
+
+start = sf.dt.datetime.now()
+# find where colors are
+colored = colored_labeled_img != [0,0,0]
+# find where colors aren't by performing OR on above
+non_c = sf.np.any(colored, 2)
+non_c = sf.np.invert(non_c)
+
+# don't have to create new array
+# colored_labeled_img[non_c] = gray_img[non_c]
+
+# create new array
+new_img = sf.np.zeros(gray_img.shape)
+new_img[colored] = colored_labeled_img[colored]
+new_img[non_c] = gray_img[non_c]
+
+new_img = new_img.astype(int)
+
+stop = sf.dt.datetime.now()
+print(f'time: {stop-start}')
+
+# start = sf.dt.datetime.now()
+# new_img = sf.np.zeros(gray_img.shape)
+# for i in range(len(gray_img)):
+#     for j in range(len(gray_img[0])):
+#         # print(f'{colored_labeled_img[i][j]} {sf.np.all(colored_labeled_img[i][j], where=[0,0,0])}')
+#         if sf.np.any(colored_labeled_img[i][j]):
+#             new_img[i][j] = colored_labeled_img[i][j]
+#         else:
+#             # print(f'    colored {i}{j} {colored_labeled_img[i][j]}')
+#             new_img[i][j] = gray_img[i][j]
+#         # print(f'gray: {gray_img[i][j]} colored: {colored_labeled_img[i][j]} new: {new_img[i][j]}')
+# new_img = new_img.astype(int)
+# stop = sf.dt.datetime.now()
+# print(f'time: {stop-start}')
+
+sf.use_subplots([img, gray_img, colored_labeled_img, new_img], ncols=4)
+# ------------------
