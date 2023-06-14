@@ -46,13 +46,22 @@ with ND2Reader(folder_loc + file_names[0]) as imgs:
 #         sf.use_subplots([img, colored_img, img2, colored_img2], ['pcna orig', f'final result: {count}', 'DAPI orig', f'final: {count2}'], nrows = 2)
 
 # ---- unsharp mask and edge detection
+print(f'Found {len(all_files)} files. Starting now...\n')
+for i in range(len(all_files)):
+    print(f'Now opening - {all_files[i]} -')
+    start = sf.dt.datetime.now()
 
-dapi_stack = sf.compress_stack(neuron_imgs)
-# img = neuron_imgs[1]
-pcna_stack = sf.compress_stack(pcna_imgs)
-# img = pcna_imgs[1]
+    with ND2Reader(folder_loc + all_files[i]) as imgs:
+        try:
+            pcna_imgs = sf.get_imgs_from_channel(imgs, 'far red')
+            neuron_imgs = sf.get_imgs_from_channel(imgs, 'DAPI')
+        except Exception as e:
+            print(e)
+            continue
 
-if demoMode:
+    dapi_stack = sf.compress_stack(neuron_imgs)
+    pcna_stack = sf.compress_stack(pcna_imgs)
+
     dapi_labeled = sf.new_imp_process(dapi_stack)
     pcna_labeled = sf.new_imp_process(pcna_stack)
     result = sf.combine_channels(pcna_labeled, dapi_labeled)
@@ -65,19 +74,39 @@ if demoMode:
     pcna_colored = sf.create_image_overlay(pcna_labeled, pcna_stack)
     f_color = sf.create_image_overlay(result, pcna_stack)
 
+    stop = sf.dt.datetime.now()
+    print(f'Time taken to count: {stop-start}')
+
     sf.use_subplots([dapi_stack, dapi_colored, pcna_stack, pcna_colored, f_color], 
                     ['dapi orig', f'dapi result: {dapi_count}', 'pcna orig', f'pcna result: {pcna_count}', f'final result: {f_count}'],
-                    ncols=5, nrows=1)
-else:
-    labeled_image, steps, titles = sf.new_imp_process(dapi_stack, True)
-    # overlay colored counts on orig image
-    colored_img = sf.create_image_overlay(labeled_image, dapi_stack)
-    count = sf.np.max(labeled_image)
-    steps.append(colored_img)
-    titles.append(f'final image {count}')
-    print(len(steps))
+                    ncols=5, nrows=1, figure_title=f'{all_files[i]}-stack')
 
-    cols = 3 * round(len(steps)/3)
-    if cols < len(steps):
-        cols += 3
-    sf.use_subplots(steps,titles, ncols=int(cols/3), nrows=3)
+# if demoMode:
+#     dapi_labeled = sf.new_imp_process(dapi_stack)
+#     pcna_labeled = sf.new_imp_process(pcna_stack)
+#     result = sf.combine_channels(pcna_labeled, dapi_labeled)
+
+#     dapi_count = sf.np.max(dapi_labeled)
+#     pcna_count = sf.np.max(pcna_labeled)
+#     f_count = sf.np.max(result)
+
+#     dapi_colored = sf.create_image_overlay(dapi_labeled, dapi_stack)
+#     pcna_colored = sf.create_image_overlay(pcna_labeled, pcna_stack)
+#     f_color = sf.create_image_overlay(result, pcna_stack)
+
+#     sf.use_subplots([dapi_stack, dapi_colored, pcna_stack, pcna_colored, f_color], 
+#                     ['dapi orig', f'dapi result: {dapi_count}', 'pcna orig', f'pcna result: {pcna_count}', f'final result: {f_count}'],
+#                     ncols=5, nrows=1)
+# else:
+#     labeled_image, steps, titles = sf.new_imp_process(dapi_stack, True)
+#     # overlay colored counts on orig image
+#     colored_img = sf.create_image_overlay(labeled_image, dapi_stack)
+#     count = sf.np.max(labeled_image)
+#     steps.append(colored_img)
+#     titles.append(f'final image {count}')
+#     print(len(steps))
+
+#     cols = 3 * round(len(steps)/3)
+#     if cols < len(steps):
+#         cols += 3
+#     sf.use_subplots(steps,titles, ncols=int(cols/3), nrows=3)
