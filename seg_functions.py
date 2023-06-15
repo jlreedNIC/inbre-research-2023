@@ -15,12 +15,20 @@ from copy import copy
 from skimage import filters, feature, color, measure, morphology
 
     
-def open_nd2file(filepath:str):
+def open_nd2file(filepath:str, channel_name=['far red', 'DAPI']):
+    """
+    Opens the nd2 file at the filepath and grabs all images in the specified channels. The default channels are 'far red' (pcna marker) and 'DAPI' (neurons).
+
+    :param filepath: String containing the file path of the nd2 file to open.
+    :param channel_name: List of strings containing channel names to get images from, defaults to ['far red', 'DAPI']
+    :return: list of list of images, i.e. far red images will be in img_stacks[0]
+    """
+    img_stacks = []
     with ND2Reader(filepath) as imgs:
-        pcna_imgs = get_imgs_from_channel(imgs, 'far red')
-        dapi_imgs = get_imgs_from_channel(imgs, 'DAPI')
+        for i in range(len(channel_name)):
+            img_stacks.append(get_imgs_from_channel(imgs, channel_name[i]))
     
-    return pcna_imgs, dapi_imgs
+    return img_stacks
 
 def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str):
     """Get all images in the stack for a specified channel in an open ND2 file.
