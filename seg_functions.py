@@ -173,7 +173,7 @@ def custom_threshold(img, threshold=0):
 
     return temp
 
-def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1):
+def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1, figure_title = None):
     """Show images in a matplotlib subplot format.
 
     :param list imgs: List containing images to show.
@@ -205,6 +205,9 @@ def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1):
 
     for a in ax:
         a.axis('off')
+
+    if figure_title != None:
+        fig.title = figure_title
 
     plt.tight_layout()
     plt.show()
@@ -270,14 +273,21 @@ def create_image_overlay(labeled_image, orig_img):
     :return array: array of shape (h,w,3)
     """
     # color the counted cells a random color
+
+    # TO DO:
+    # FIX RGB VALUES SO BETWEEN 0 AND 1
     print('coloring started')
     colored_labeled_img = color.label2rgb(labeled_image, bg_label=0)
     print('cells colored')
 
     start = dt.datetime.now()
     # convert original image to grayscale and scale down brightness
-    gray_img = color.gray2rgb(orig_img/255) - .25
-    colored_labeled_img = colored_labeled_img
+    gray_img = orig_img/np.max(orig_img)
+    if np.mean(gray_img) < .3:
+        gray_img = color.gray2rgb(orig_img)/np.max(orig_img) * 1.5
+    else:
+        gray_img = color.gray2rgb(orig_img)/np.max(orig_img)
+    # colored_labeled_img = colored_labeled_img
 
     # find where colors are
     colored = colored_labeled_img != [0,0,0]
