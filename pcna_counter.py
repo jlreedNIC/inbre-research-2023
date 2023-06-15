@@ -10,40 +10,44 @@ import seg_functions as sf
 from nd2reader import ND2Reader
 import numpy as np
 
-# # testing command line filepath passing
-# import argparse
-# import os
+# testing command line filepath passing
+import argparse
+import os
 
-# parser = argparse.ArgumentParser(description="Program to count PCNA")
-# parser.add_argument('filepath', type=str, help='path to nd2 file')
-# parser.add_argument('-d', '--demo', action='store_true')
-# args = parser.parse_args()
+parser = argparse.ArgumentParser(description="Program to count PCNA")
+parser.add_argument('filepath', type=str, help='path to nd2 file folder')
+parser.add_argument('-d', '--demo', action='store_true')
+args = parser.parse_args()
 
-# print(args.filepath, args.demo)
-# # get all files from nd2 files dir
-# all_files = os.listdir(args.filepath)
+print(args.filepath, args.demo)
 
-folder_loc = 'nd2_files/'
-file_names = [
-    'S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2', #40mb
-    '6dpi-uoi2505Tg-2R-#17-sxn3003.nd2',
-    '6dpi-uoi2505Tg-2R-#17-sxn3002.nd2',
-    'gl22-6dpi-3R-#12-sxn3P002.nd2', # not catching all cells
-    '6dpi-uoi2500Tg-3R-#17-sxn6001.nd2'
-]
+# get all files from nd2 files dir
+all_files = os.listdir(args.filepath)
+
+
+# folder_loc = 'nd2_files/'
+# file_names = [
+#     'S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2', #40mb
+#     '6dpi-uoi2505Tg-2R-#17-sxn3003.nd2',
+#     '6dpi-uoi2505Tg-2R-#17-sxn3002.nd2',
+#     'gl22-6dpi-3R-#12-sxn3P002.nd2', # not catching all cells
+#     '6dpi-uoi2500Tg-3R-#17-sxn6001.nd2'
+# ]
 
 # quickly show original and result image
-demoMode = True
+# demoMode = True
 
 # only show a single channel
-singleChannel = True
+singleChannel = False
 
 # if single channel is True, which channel do you want to see
 # use these variables WITH quotations:    'far red'    or     'DAPI'
 channel = 'far red'          
 
 
-file = folder_loc + file_names[4]
+# file = folder_loc + file_names[4]
+file = args.filepath + '/' + all_files[0]
+demoMode = args.demo
 
 if singleChannel:
     if channel == None:
@@ -104,9 +108,9 @@ else:
     # 2 channels
 
     print(f'Opening file: - {file} -\n')
-    pcna_imgs, dapi_imgs = sf.open_nd2file(file)
+    
     try:
-        img_stack = sf.open_nd2file(file, channel_name=[channel])
+        pcna_imgs, dapi_imgs = sf.open_nd2file(file)
     except Exception as e:
         print(f'Error opening {file}.')
         print(e)
