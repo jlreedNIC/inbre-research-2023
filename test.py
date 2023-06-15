@@ -154,33 +154,34 @@ img = pcna_imgs[1]
 # ------------------
 
 # ------------- testing overlapping cells
-pcna_stack = sf.compress_stack(pcna_imgs)
-dapi_stack = sf.compress_stack(neuron_imgs)
+# pcna_stack = sf.compress_stack(pcna_imgs)
+# dapi_stack = sf.compress_stack(neuron_imgs)
 
-# process images
+# # process images
 
-labeled_pcna = sf.new_imp_process(pcna_stack)
-labeled_dapi = sf.new_imp_process(dapi_stack)
+# labeled_pcna = sf.new_imp_process(pcna_stack)
+# labeled_dapi = sf.new_imp_process(dapi_stack)
 
-pcna_color = sf.create_image_overlay(labeled_pcna, pcna_stack)
-dapi_color = sf.create_image_overlay(labeled_dapi, dapi_stack)
+# pcna_color = sf.create_image_overlay(labeled_pcna, pcna_stack)
+# dapi_color = sf.create_image_overlay(labeled_dapi, dapi_stack)
 
-img_and = sf.np.logical_and(labeled_pcna, labeled_dapi)
+# img_and = sf.np.logical_and(labeled_pcna, labeled_dapi)
 
-final_image, count = sf.measure.label(img_and, connectivity=1, return_num=True)
-pcnacount = sf.np.max(labeled_pcna)
-dapicount = sf.np.max(labeled_dapi)
+# final_image, count = sf.measure.label(img_and, connectivity=1, return_num=True)
+# pcnacount = sf.np.max(labeled_pcna)
+# dapicount = sf.np.max(labeled_dapi)
 
-size = 7
-final_image = sf.morphology.remove_small_objects(final_image, min_size=size)
-final_image, count = sf.measure.label(final_image, connectivity=1, return_num=True)
+# size = 7
+# final_image = sf.morphology.remove_small_objects(final_image, min_size=size)
+# final_image, count = sf.measure.label(final_image, connectivity=1, return_num=True)
 
 
-colored = sf.create_image_overlay(final_image, pcna_stack)
+# colored = sf.create_image_overlay(final_image, pcna_stack)
 
-# plot
-sf.use_subplots(
-    [pcna_stack, pcna_color, dapi_stack, dapi_color, img_and, colored], 
-    ['pcna orig', f'counted pcna {pcnacount}', 'dapi orig', f'counted dapi {dapicount}', 'anded together', f'final count: {count}'],
-    ncols=3, nrows=2, figure_title="file name here"
-)
+# # plot
+# sf.use_subplots(
+#     [pcna_stack, pcna_color, dapi_stack, dapi_color, img_and, colored], 
+#     ['pcna orig', f'counted pcna {pcnacount}', 'dapi orig', f'counted dapi {dapicount}', 'anded together', f'final count: {count}'],
+#     ncols=3, nrows=2, figure_title="file name here"
+# )
+# -------------------
