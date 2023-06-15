@@ -52,7 +52,12 @@ if singleChannel:
         exit(1)
     
     print(f'Opening file: - {file} -\n')
-    img_stack = sf.open_nd2file(file, channel_name=[channel])
+    try:
+        img_stack = sf.open_nd2file(file, channel_name=[channel])
+    except Exception as e:
+        print(f'Error opening {file}.')
+        print(e)
+        exit(1)
     
     # compress stacks to single img
     img = sf.compress_stack(img_stack[0])
@@ -100,6 +105,12 @@ else:
 
     print(f'Opening file: - {file} -\n')
     pcna_imgs, dapi_imgs = sf.open_nd2file(file)
+    try:
+        img_stack = sf.open_nd2file(file, channel_name=[channel])
+    except Exception as e:
+        print(f'Error opening {file}.')
+        print(e)
+        exit(1)
 
     # compress stacks to single img
     pcna_img = sf.compress_stack(pcna_imgs)
