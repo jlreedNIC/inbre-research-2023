@@ -87,32 +87,89 @@ for i in range(len(all_files)):
                     ['dapi orig', f'dapi result: {dapi_count}', 'pcna orig', f'pcna result: {pcna_count}', f'final result: {f_count}'],
                     ncols=5, nrows=1, figure_title=f'{all_files[i]}-stack')
 
-# if demoMode:
-#     dapi_labeled = sf.new_imp_process(dapi_stack)
-#     pcna_labeled = sf.new_imp_process(pcna_stack)
-#     result = sf.combine_channels(pcna_labeled, dapi_labeled)
+# -------- testing list for processing
 
-#     dapi_count = sf.np.max(dapi_labeled)
-#     pcna_count = sf.np.max(pcna_labeled)
-#     f_count = sf.np.max(result)
+# demoMode = True         # quickly show original and result image
+# singleChannel = False   # only show a single channel?
+# channel = None          # if single channel is True, which channel do you want to see
+#                         # use these variables WITH quotations:    'far red'    or     'DAPI'
 
-#     dapi_colored = sf.create_image_overlay(dapi_labeled, dapi_stack)
-#     pcna_colored = sf.create_image_overlay(pcna_labeled, pcna_stack)
-#     f_color = sf.create_image_overlay(result, pcna_stack)
-
-#     sf.use_subplots([dapi_stack, dapi_colored, pcna_stack, pcna_colored, f_color], 
-#                     ['dapi orig', f'dapi result: {dapi_count}', 'pcna orig', f'pcna result: {pcna_count}', f'final result: {f_count}'],
-#                     ncols=5, nrows=1)
+# img_stacks = []
+# if singleChannel:
+#     if channel == None:
+#         print('You must change the channel name.')
+#         print("Example: 'far red' or 'DAPI'")
+#         exit(1)
+    
+#     img_stacks.append(sf.open_nd2file(folder_loc + file_names[4], channel_name=[channel]))
+#     img_titles = [channel]
 # else:
-#     labeled_image, steps, titles = sf.new_imp_process(dapi_stack, True)
-#     # overlay colored counts on orig image
-#     colored_img = sf.create_image_overlay(labeled_image, dapi_stack)
-#     count = sf.np.max(labeled_image)
-#     steps.append(colored_img)
-#     titles.append(f'final image {count}')
-#     print(len(steps))
+#     img_stacks = sf.open_nd2file(folder_loc + file_names[4])
+#     img_titles = ['pcna', 'dapi']
 
-#     cols = 3 * round(len(steps)/3)
-#     if cols < len(steps):
-#         cols += 3
-#     sf.use_subplots(steps,titles, ncols=int(cols/3), nrows=3)
+# img_steps = []          # imgs to output to screen
+# labeled_counts = []     # counted labeled images
+
+# # count cells in each channel
+# for i in range(len(img_stacks)):
+#     # get compressed img
+#     img = sf.compress_stack(img_stacks[i])
+#     img_steps.append(img)
+#     img_titles.append(img_titles.pop(0)) # get name and put it in correct spot
+
+#     # process and count img
+#     labeled_counts.append(sf.new_imp_process(img))
+#     # color image and add it to steps
+#     img_steps.append(sf.create_image_overlay(labeled_counts[i], img))
+#     img_titles.append(f'counted {np.max(labeled_counts[i])}')
+
+# labeled_counts.append(sf.combine_channels(labeled_counts[0], labeled_counts[1]))
+# img_steps.append(sf.create_image_overlay(img_steps[0], labeled_counts[-1]))
+# img_titles.append(f'final count: {np.max(labeled_counts[-1])}')
+
+# sf.use_subplots(
+#     img_steps,
+#     img_titles,
+#     ncols=len(img_steps)
+# )
+# # NOTE: current implementation does not combine channels together
+
+# # if demoMode:
+# #     # ----------- demo mode -----------
+# #     # img = sf.compress_stack(pcna_imgs)
+# #     img = pcna_imgs[1]
+# #     img2 = neuron_imgs[1]
+
+# #     labeled_image= sf.new_imp_process(img)
+# #     labeled2 = sf.new_imp_process(img2)
+
+# #     # create transparent image of cell counts
+# #     combine_img = sf.create_image_overlay(labeled_image, img)
+# #     combine2 = sf.create_image_overlay(labeled2, img2)
+
+# #     # overlay counted cells on top of original image
+# #     sf.use_subplots(
+# #         [img, combine_img, img2, combine2],
+# #         ['original', f'counted {np.max(labeled_image)} cells', 'neurons', f'counted {np.max(labeled2)}'],
+# #         ncols=2, nrows=2)
+# # else:
+# #     # ------------ debugging use ----------------
+# #     img = sf.compress_stack(neuron_imgs)
+# #     # img = sf.compress_stack(pcna_imgs)
+# #     labeled_image, steps, titles = sf.new_imp_process(img, save_steps=True)
+
+# #     combine_img = sf.create_image_overlay(labeled_image, img)
+
+# #     steps.append(combine_img)
+# #     titles.append(f'final result {np.max(labeled_image)}')
+
+# #     # overlay counted cells on top of original image
+
+# #     cols = 3 * round(len(steps)/3)
+# #     if cols < len(steps):
+# #         cols += 3
+
+# #     sf.use_subplots(
+# #         steps,
+# #         titles,
+# #         ncols=int(cols/3), nrows=3)
