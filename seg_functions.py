@@ -395,7 +395,7 @@ def new_imp_process(img, save_steps=False):
 
         steps.append(copy(img))
         titles.append('original')
-        print('Starting processing.')
+        print('\nStarting processing.')
 
     # unsharp to original
     progress_img = apply_unsharp_filter(img)
@@ -450,7 +450,7 @@ def new_imp_process(img, save_steps=False):
     final_image, count = measure.label(progress_img, connectivity=1, return_num=True)
     if save_steps:
         steps.append(copy(final_image))
-        titles.append(f'final result: {count}')
+        titles.append(f'counted: {count}')
         print(f'Image segmented. {count} cells counted.')
     
     # remove small objects and relabel array
@@ -459,8 +459,8 @@ def new_imp_process(img, save_steps=False):
     final_image, count = measure.label(final_image, connectivity=1, return_num=True)
     if save_steps:
         steps.append(copy(final_image))
-        titles.append(f'artifacts removed <= {size}')
-        print(f'Small objects smaller than {size} in size removed.')
+        titles.append(f'artifacts removed <= {size}. Count: {count}')
+        print(f'Removed artifacts smaller than {size} and recounted: {count} cells.')
 
     if save_steps:
         return final_image, steps, titles
