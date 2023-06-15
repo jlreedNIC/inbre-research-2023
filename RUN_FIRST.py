@@ -45,18 +45,19 @@ except ModuleNotFoundError as e:
     everythingInstalled = False
 
 try:
-    from copy import copy
-except ModuleNotFoundError as e:
-    print(f'\n{e}')
-    print('Please type: pip3 install pycopy-copy')
-    everythingInstalled = False
-
-try:
     from skimage import filters, feature, color, measure, morphology
 except ModuleNotFoundError as e:
     print(f'\n{e}')
     print('Please type: pip3 install scikit-image')
     everythingInstalled = False
+
+try:
+    import argparse
+except ModuleNotFoundError as e:
+    print(f'\n{e}')
+    print('Please type: pip3 install argparse')
+    everythingInstalled = False
+
 
 if everythingInstalled:
     print("\nYou are good to start the program! Type: python3 pcna_counter.py")
