@@ -15,11 +15,12 @@ from copy import copy
 from skimage import filters, feature, color, measure, morphology
 
     
-def open_nd2file(filepath:str, channel_name:str):
+def open_nd2file(filepath:str):
     with ND2Reader(filepath) as imgs:
-        img_stack = get_imgs_from_channel(imgs, channel_name)
+        pcna_imgs = get_imgs_from_channel(imgs, 'far red')
+        dapi_imgs = get_imgs_from_channel(imgs, 'DAPI')
     
-    return img_stack
+    return pcna_imgs, dapi_imgs
 
 def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str):
     """Get all images in the stack for a specified channel in an open ND2 file.
@@ -213,7 +214,7 @@ def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1, figure_title = None
     plt.show()
 
 def create_transparent_img(orig):
-    """Converts an RGB image into RGBA and makes all black pixels transparent by looping through image.
+    """DEPRECATED. Converts an RGB image into RGBA and makes all black pixels transparent by looping through image.
 
     :param array orig: image in array format with shape (h,w,3)
     :return array: image with shape (h,w,4)
@@ -238,7 +239,7 @@ def create_transparent_img(orig):
     return transparent
 
 def combine_imgs(orig, new_img):
-    """Combines an image in gray scale with an image with a transparent background into a single image to create an overlay by looping through images.
+    """DEPRECATED. Combines an image in gray scale with an image with a transparent background into a single image to create an overlay by looping through images.
 
     :param array orig: image in array format with shape (h,w)
     :param array new_img: image in array with shape (h,w,4)
@@ -276,11 +277,8 @@ def create_image_overlay(labeled_image, orig_img):
 
     # TO DO:
     # FIX RGB VALUES SO BETWEEN 0 AND 1
-    print('coloring started')
     colored_labeled_img = color.label2rgb(labeled_image, bg_label=0)
-    print('cells colored')
 
-    start = dt.datetime.now()
     # convert original image to grayscale and scale down brightness
     gray_img = orig_img/np.max(orig_img)
     if np.mean(gray_img) < .3:
@@ -299,9 +297,6 @@ def create_image_overlay(labeled_image, orig_img):
     # set non colored parts to original image
     colored_labeled_img[non_c] = gray_img[non_c]
 
-    # new_img = new_img.astype(int)
-    stop = dt.datetime.now()
-    print(f'time for image combination: {stop-start}')
     return colored_labeled_img
 
 def process_image(img, save_steps=False):
