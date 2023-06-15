@@ -182,5 +182,5 @@ colored = sf.create_image_overlay(final_image, pcna_stack)
 sf.use_subplots(
     [pcna_stack, pcna_color, dapi_stack, dapi_color, img_and, colored], 
     ['pcna orig', f'counted pcna {pcnacount}', 'dapi orig', f'counted dapi {dapicount}', 'anded together', f'final count: {count}'],
-    ncols=3, nrows=2
+    ncols=3, nrows=2, figure_title="file name here"
 )
