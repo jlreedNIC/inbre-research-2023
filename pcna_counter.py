@@ -17,7 +17,6 @@ import os
 # TO DO:
 # put all user changeable variables into separate file
 
-
 parser = argparse.ArgumentParser(description="Program to count PCNA")
 parser.add_argument('filepath', type=str, help='path to nd2 file folder')
 parser.add_argument('-d', '--demo', action='store_true')
@@ -43,11 +42,11 @@ file_names = [
     '6dpi-uoi2505Tg-2R-#17-sxn3003.nd2',
     '6dpi-uoi2505Tg-2R-#17-sxn3002.nd2',
     'gl22-6dpi-3R-#12-sxn3P002.nd2', # not catching all cells
-    '6dpi-uoi2500Tg-3R-#17-sxn6001.nd2'
+    '6dpi-uoi2505Tg-5R-#18-sxn1004.nd2'
 ]
 
 # quickly show original and result image
-demoMode = True
+demoMode = False
 
 # only show a single channel
 singleChannel = False
@@ -57,9 +56,9 @@ singleChannel = False
 channel = 'far red'          
 
 
-# file = file_names[2]
+file = file_names[4]
 folder_loc = args.filepath + '/'
-file = all_files[1]
+# file = all_files[1]
 demoMode = args.demo
 
 if singleChannel:
@@ -135,14 +134,17 @@ else:
     if not demoMode:
         print('\nImages compressed.')
 
+    # select roi
+    _, mask = sf.select_roi(pcna_img, True)
+
     # process and count imgs
     if demoMode:
-        pcna_labeled = sf.new_imp_process(pcna_img)
-        dapi_labeled = sf.new_imp_process(dapi_img)
+        pcna_labeled = sf.new_imp_process(pcna_img, mask=mask)
+        dapi_labeled = sf.new_imp_process(dapi_img, mask=mask)
     else:
         print('\nApplying filters...')
-        pcna_labeled, pcna_steps, pcna_titles = sf.new_imp_process(pcna_img, True)
-        dapi_labeled, dapi_steps, dapi_titles = sf.new_imp_process(dapi_img, True)
+        pcna_labeled, pcna_steps, pcna_titles = sf.new_imp_process(pcna_img, True, mask=mask)
+        dapi_labeled, dapi_steps, dapi_titles = sf.new_imp_process(dapi_img, True, mask=mask)
 
 
     # perform AND combination
