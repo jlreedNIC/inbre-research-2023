@@ -47,7 +47,8 @@ with ND2Reader(folder_loc + file_names[0]) as imgs:
 
 # ---- currently loops through all files in nd2 folder
 print(f'Found {len(all_files)} files. Starting now...\n')
-for i in range(len(all_files)):
+# for i in range(len(all_files)):
+for i in range(1):
     print(f'Now opening - {all_files[i]} -')
     start = sf.dt.datetime.now()
 
@@ -81,6 +82,11 @@ for i in range(len(all_files)):
 
     stop = sf.dt.datetime.now()
     print(f'Time taken to count: {stop-start}')
+
+    import os
+    folder_loc = 'cell_sizes'
+    os.mkdir(folder_loc)
+    sf.get_cell_sizes(result, folder_loc + '/' + all_files[i] + '-cell-counts.csv')
 
     # show images
     sf.use_subplots([dapi_stack, dapi_colored, pcna_stack, pcna_colored, f_color], 
