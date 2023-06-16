@@ -517,9 +517,19 @@ def get_cell_sizes(img, filename:str):
     except FileExistsError as e:
         f = open(filename, 'w')
 
+    f.write('cell,size,x-coordinate,y-coordinate,\n')
+
     for i in range(num_cells):
-        size = (img == i+1).sum()
+        # get size of cell
+        size = (img == (i+1)).sum()
         # print(f'cell #{i+1}: {size} pixels')
-        f.write(f'{i+1},{size},\n')
+
+        # get a single index in cell
+        index = np.where(img == (i+1))
+        x = index[0][0]
+        y = index[1][0]
+
+        # print(f'{i+1}: {x},{y} = {img[x][y]}')
+        f.write(f'{i+1},{size},{x},{y},\n')
     
     f.close()
