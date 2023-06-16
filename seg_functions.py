@@ -67,6 +67,42 @@ def compress_stack(img_stack:list):
 
     return new_arr
 
+def select_roi(img, debug=False):
+    temp = copy(img)
+    if np.max(temp) > 1:
+        temp /= np.max(temp)
+
+    if debug:
+        print('\nMaking ROI selection...')
+    
+    # select rectangular roi
+    window = 'ROI Selection'
+    cv2.namedWindow(window, cv2.WINDOW_NORMAL)
+    res = cv2.selectROI(window, temp, showCrosshair=False)
+    res = np.array(res)
+    cv2.destroyAllWindows()
+
+    if debug:
+        print(f'\nPoints: {res}')
+
+    # make copy of image and fill roi with white
+    img_copy = copy(temp)
+    cv2.rectangle(img_copy, res, 1, -1)
+
+    # create mask to show roi
+    mask = img_copy != 1
+    temp[mask] = 0
+
+    # show masked image
+    print('\nPress any key to close the window. DO NOT CLOSE THE WINDOW YOURSELF.')
+    cv2.namedWindow('ROI', cv2.WINDOW_NORMAL)
+    cv2.imshow('ROI', temp)
+    cv2.waitKey(0)
+
+    cv2.destroyWindow('ROI')
+    
+    return temp, mask
+
 def get_edges(img):
     """
     Applies canny edge detection to image and returns boolean image containing edges found.
@@ -379,7 +415,7 @@ def process_image(img, save_steps=False):
     else:
         return labeled_image
 
-def new_imp_process(img, save_steps=False):
+def new_imp_process(img, save_steps=False, mask=None):
     """
     Applies filters to image in order to count the cells in the image. Can also return images of each step applied
 
@@ -445,6 +481,12 @@ def new_imp_process(img, save_steps=False):
         steps.append(copy(progress_img))
         titles.append('multi otsu applied')
         print("Multi Otsu threshold applied (separated background from foreground).")
+    
+    try:
+        progress_img[mask] = 0
+        print('Applying ROI mask.')
+    except:
+        pass
 
     # count binary image
     final_image, count = measure.label(progress_img, connectivity=1, return_num=True)
