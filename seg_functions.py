@@ -498,3 +498,28 @@ def combine_channels(pcna_img, dapi_img, save_steps = False):
         return img_and, steps, titles
     else:
         return img_and
+
+def get_cell_sizes(img, filename:str):
+    """
+    Will count the size of each object in the given image and output it to the given file.
+
+    :param img: image that is a labeled format
+    :param filename: file to output data, a csv file
+    """
+    # loop through number of cells and sum total pixels
+
+    num_cells = np.max(img)
+    print(f'Size of image: {img.shape[0]} x {img.shape[1]}')
+    print(f'number of cells: {num_cells}\n')
+
+    try:
+        f = open(filename, 'x')
+    except FileExistsError as e:
+        f = open(filename, 'w')
+
+    for i in range(num_cells):
+        size = (img == i+1).sum()
+        # print(f'cell #{i+1}: {size} pixels')
+        f.write(f'{i+1},{size},\n')
+    
+    f.close()
