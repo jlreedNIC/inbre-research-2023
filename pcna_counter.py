@@ -6,8 +6,6 @@
 # ------------
 
 import seg_functions as sf
-
-from nd2reader import ND2Reader
 import numpy as np
 
 # # testing command line filepath passing
@@ -17,25 +15,28 @@ import os
 # TO DO:
 # put all user changeable variables into separate file
 
-parser = argparse.ArgumentParser(description="Program to count PCNA")
-parser.add_argument('filepath', type=str, help='path to nd2 file folder')
-parser.add_argument('-d', '--demo', action='store_true')
-args = parser.parse_args()
+# parser = argparse.ArgumentParser(description="Program to count PCNA")
+# parser.add_argument('filepath', type=str, help='path to nd2 file folder')
+# parser.add_argument('-d', '--demo', action='store_true')
+# args = parser.parse_args()
 
-print(args.filepath, args.demo)
+# print(args.filepath, args.demo)
 
-# get all files from nd2 files dir
-all_files = os.listdir(args.filepath)
+# # get all files from nd2 files dir
+# all_files = os.listdir(args.filepath)
 
 
 folder_loc = 'nd2_files/'
 cell_folder = 'cell_sizes/'
 
+all_files = os.listdir(folder_loc)
+
 # create folder to store cell counts
 try:
     os.mkdir(cell_folder)
 except FileExistsError as e:
-    print(f'{cell_folder} exists!')
+    # print(f'{cell_folder} exists!')
+    pass
 
 file_names = [
     'S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2', #40mb
@@ -46,20 +47,20 @@ file_names = [
 ]
 
 # quickly show original and result image
-demoMode = False
+show_steps = True
 
 # only show a single channel
-singleChannel = False
+singleChannel = True
 
 # if single channel is True, which channel do you want to see
 # use these variables WITH quotations:    'far red'    or     'DAPI'
 channel = 'far red'          
 
 
-file = file_names[4]
-folder_loc = args.filepath + '/'
-# file = all_files[1]
-demoMode = args.demo
+# file = file_names[4]
+# folder_loc = args.filepath + '/'
+file = all_files[1]
+# demoMode = args.demo
 
 if singleChannel:
     if channel == None:
@@ -75,50 +76,46 @@ if singleChannel:
         print(e)
         exit(1)
     
+    # rename for file conventions
+    if channel == 'far red':
+        channel = 'pcna'
+
     # compress stacks to single img
     img = sf.compress_stack(img_stack[0])
-    if not demoMode:
-        print('\nImages compressed.')
+    print('\nImages compressed.')
 
     # process and count imgs
-    if demoMode:
-        labeled = sf.new_imp_process(img)
-    else:
-        print('\nApplying filters...')
-        labeled, steps, titles = sf.new_imp_process(img, True)
+    print('\nApplying filters...')
+    labeled, steps, titles = sf.new_imp_process(img, debug=True)
 
     # get counts from each image
     count = np.max(labeled)
 
     # color each image and overlay with original
-    if demoMode:
-        print('\nColoring image and overlaying with original...')
+    print('\nColoring image and overlaying with original...')
     color = sf.create_image_overlay(labeled, img)
 
+    # Output results to terminal
     print(f'\nFinal count:   {count} cells')
 
-    # show images
-    if demoMode:
-        sf.use_subplots(
-            [img, color],
-            ['orig', f'PCNA: {count}'],
-            ncols=2
-        )
-    else:
-        print('\nShowing steps...')
-        # show steps
-        cols = 3 * round(len(steps)/3)
-        if cols < len(steps):
-            cols += 3
+    # count cell sizes of the result image
+    sf.get_cell_sizes(labeled, cell_folder + file[:-4] + '-' + channel + '-cell-counts.csv', debug=True)
 
-        sf.use_subplots(
-            steps,
-            titles,
-            ncols=int(cols/3), nrows=3
-        )
+    # show images
+    print('\nDisplaying image...')
+    # show steps
+    cols = 3 * round(len(steps)/3)
+    if cols < len(steps):
+        cols += 3
+
+    sf.use_subplots(
+        steps,
+        titles,
+        ncols=int(cols/3), nrows=3,
+        figure_title= file[:-4] + '-' + channel + '-RESULTS.nd2'
+    )
 else:
     # 2 channels
-
     print(f'Opening file: - {file} -\n')
     
     try:
@@ -131,28 +128,24 @@ else:
     # compress stacks to single img
     pcna_img = sf.compress_stack(pcna_imgs)
     dapi_img = sf.compress_stack(dapi_imgs)
-    if not demoMode:
+    if show_steps:
         print('\nImages compressed.')
 
-    # select roi
-    _, mask = sf.select_roi(pcna_img, True)
+    # # select roi
+    # _, mask = sf.select_roi(pcna_img, True)
 
     # process and count imgs
-    if demoMode:
-        pcna_labeled = sf.new_imp_process(pcna_img, mask=mask)
-        dapi_labeled = sf.new_imp_process(dapi_img, mask=mask)
-    else:
+    # pcna_steps and pcna_titles will be empty lists if show_steps is selected
+    pcna_labeled, pcna_steps, pcna_titles = sf.new_imp_process(pcna_img, debug=show_steps)
+    dapi_labeled, dapi_steps, dapi_titles = sf.new_imp_process(dapi_img, debug=show_steps)
+    if show_steps:
         print('\nApplying filters...')
-        pcna_labeled, pcna_steps, pcna_titles = sf.new_imp_process(pcna_img, True, mask=mask)
-        dapi_labeled, dapi_steps, dapi_titles = sf.new_imp_process(dapi_img, True, mask=mask)
-
 
     # perform AND combination
-    if demoMode:
-        result_labeled = sf.combine_channels(pcna_labeled, dapi_labeled)
-    else:
+    # result_steps and result_titles will be empty lists if show_steps is selected
+    result_labeled, result_steps, result_titles = sf.combine_channels(pcna_labeled, dapi_labeled, debug=show_steps)
+    if show_steps:
         print('\nCombining channels...')
-        result_labeled, result_steps, result_titles = sf.combine_channels(pcna_labeled, dapi_labeled, True)
 
     # get counts from each image
     pcna_count = np.max(pcna_labeled)
@@ -160,27 +153,21 @@ else:
     result_count = np.max(result_labeled)
 
     # color each image and overlay with original
-    if not demoMode:
+    if show_steps:
         print('\nColoring images and overlaying with original...')
     pcna_color = sf.create_image_overlay(pcna_labeled, pcna_img)
     dapi_color = sf.create_image_overlay(dapi_labeled, dapi_img)
     result_color = sf.create_image_overlay(result_labeled, pcna_img)
 
+    # Output results to terminal
     print(f'\nPCNA image:   {pcna_count} cells')
     print(f'DAPI image:   {dapi_count} cells')
     print(f'Final result: {result_count} cells\n')
 
     # count cell sizes of the result image
-    sf.get_cell_sizes(result_labeled, cell_folder + file + '-cell-counts.csv')
+    sf.get_cell_sizes(result_labeled, cell_folder + file + '-cell-counts.csv', debug=show_steps)
 
-    # show images
-    if demoMode:
-        sf.use_subplots(
-            [pcna_img, pcna_color, dapi_img, dapi_color, result_color],
-            ['PCNA orig', f'PCNA: {pcna_count}', 'DAPI orig', f'DAPI: {dapi_count}', f'final: {result_count}'],
-            ncols=5
-        )
-    else:
+    if show_steps:
         print('Showing PCNA image filter steps...\n')
         # show pcna steps
         cols = 3 * round(len(pcna_steps)/3)
@@ -190,7 +177,8 @@ else:
         sf.use_subplots(
             pcna_steps,
             pcna_titles,
-            ncols=int(cols/3), nrows=3
+            ncols=int(cols/3), nrows=3,
+            figure_title= file[:-4] + '-PCNA-STEPS.nd2'
         )
 
         print('Showing DAPI image filter steps...\n')
@@ -202,55 +190,15 @@ else:
         sf.use_subplots(
             dapi_steps,
             dapi_titles,
-            ncols=int(cols/3), nrows=3
+            ncols=int(cols/3), nrows=3,
+            figure_title= file[:-4] + '-DAPI-STEPS.nd2'
         )
 
         print('Showing final image results...\n')
-        # show results
-        sf.use_subplots(
-            [pcna_img, pcna_color, dapi_img, dapi_color, result_color],
-            ['PCNA orig', f'PCNA: {pcna_count}', 'DAPI orig', f'DAPI: {dapi_count}', f'final: {result_count}'],
-            ncols=5
-        )
-
-# NOTE: current implementation does not combine channels together
-
-# if demoMode:
-#     # ----------- demo mode -----------
-#     # img = sf.compress_stack(pcna_imgs)
-#     img = pcna_imgs[1]
-#     img2 = neuron_imgs[1]
-
-#     labeled_image= sf.new_imp_process(img)
-#     labeled2 = sf.new_imp_process(img2)
-
-#     # create transparent image of cell counts
-#     combine_img = sf.create_image_overlay(labeled_image, img)
-#     combine2 = sf.create_image_overlay(labeled2, img2)
-
-#     # overlay counted cells on top of original image
-#     sf.use_subplots(
-#         [img, combine_img, img2, combine2],
-#         ['original', f'counted {np.max(labeled_image)} cells', 'neurons', f'counted {np.max(labeled2)}'],
-#         ncols=2, nrows=2)
-# else:
-#     # ------------ debugging use ----------------
-#     img = sf.compress_stack(neuron_imgs)
-#     # img = sf.compress_stack(pcna_imgs)
-#     labeled_image, steps, titles = sf.new_imp_process(img, save_steps=True)
-
-#     combine_img = sf.create_image_overlay(labeled_image, img)
-
-#     steps.append(combine_img)
-#     titles.append(f'final result {np.max(labeled_image)}')
-
-#     # overlay counted cells on top of original image
-
-#     cols = 3 * round(len(steps)/3)
-#     if cols < len(steps):
-#         cols += 3
-
-#     sf.use_subplots(
-#         steps,
-#         titles,
-#         ncols=int(cols/3), nrows=3)
+    # show results
+    sf.use_subplots(
+        [dapi_img, dapi_color, pcna_img, pcna_color, result_color],
+        [ 'DAPI orig', f'DAPI: {dapi_count}', 'PCNA orig', f'PCNA: {pcna_count}',f'final: {result_count}'],
+        ncols=5,
+        figure_title= file[:-4] + '-RESULTS.nd2'
+    )
