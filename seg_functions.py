@@ -21,6 +21,7 @@ def open_nd2file(filepath:str, channel_name=['far red', 'DAPI']):
 
     :param filepath: String containing the file path of the nd2 file to open.
     :param channel_name: List of strings containing channel names to get images from, defaults to ['far red', 'DAPI']
+
     :return: list of list of images, i.e. far red images will be in img_stacks[0]
     """
     img_stacks = []
@@ -30,19 +31,21 @@ def open_nd2file(filepath:str, channel_name=['far red', 'DAPI']):
     
     return img_stacks
 
-def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str):
+def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str, debug=False):
     """Get all images in the stack for a specified channel in an open ND2 file.
 
-    :param ND2Reader nd2img: Open ND2 file using ND2Reader
-    :param str channel_name: channel name given in string format. Ex - 'far red' or 'DAPI'
+    :param ND2Reader nd2img:    Open ND2 file using ND2Reader
+    :param str channel_name:    channel name given in string format. Ex - 'far red' or 'DAPI'
+    :param boolean debug:  if True, show print statements to console
+
     :return list: list of images in a numpy array
     """
     # get all channels and all z
     nd2img.iter_axes = 'cz'
     # get index of channel
     channel_num = nd2img.metadata['channels'].index(channel_name)+1
-
-    print(f'{channel_name} is at channel number {channel_num}')
+    if debug:
+        print(f'{channel_name} is at channel number {channel_num}')
 
     # get number of images in channel
     z_img_num = nd2img.sizes['z']
@@ -60,6 +63,7 @@ def compress_stack(img_stack:list):
     """Combines all images in an array into one image by taking the maximum value of the images for each pixel.
 
     :param list img_stack: list of gray-scale images
+
     :return numpy array: a numpy array containing a single image
     """
     # new array created by taking max value of all imgs in stack
@@ -121,6 +125,7 @@ def apply_unsharp_filter(img):
     Then applies gaussian blur (sigma 1.5) to clean it up
 
     :param img: image to apply filter to, numpy array preferred
+
     :return:    image, numpy array
     """
     unsharp = filters.unsharp_mask(img, radius = 5, amount = 20.0)
@@ -135,6 +140,7 @@ def apply_local_threshold(img):
     Block size for local is 3, method is 'mean', and offset is 0.0. 
 
     :param img: image, numpy array preferred
+
     :return:    image with local threshold mask applied
                 mask produced by local threshold
     """
@@ -153,6 +159,7 @@ def apply_otsus_threshold(img):
     contrast of the image before applying thresholding.
 
     :param list img: Image in an array format
+
     :return array(s): Array with thresholding applied, as well as the binary mask that was applied to image
     """
     blur_img = cv2.GaussianBlur(img, (7,7), 0) # apply blur
@@ -173,6 +180,7 @@ def apply_skimage_otsu(img):
     Applies the Otsu mask to the image
 
     :param img: Image to apply algo to, numpy array preferred
+
     :return:    image with mask applied
                 binary mask
     """
@@ -190,6 +198,7 @@ def apply_multi_otsu(img, c = 3):
 
     :param img: image, numpy array preferred
     :param c:   classes or section to break image up into, defaults to 3
+
     :return:    image with mask applied
                 binary mask
     """
@@ -205,6 +214,7 @@ def custom_threshold(img, threshold=0):
 
     :param array img: image in array format
     :param int val: threshold value to 0 out, defaults to 0
+
     :return array: image after thresholding applied
     """
     temp = copy(img)
@@ -252,7 +262,7 @@ def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1, figure_title = None
         a.axis('off')
 
     if figure_title != None:
-        fig.title = figure_title
+        fig.canvas.manager.set_window_title(figure_title)
 
     plt.tight_layout()
     plt.show()
@@ -315,6 +325,7 @@ def create_image_overlay(labeled_image, orig_img):
 
     :param array labeled_image: array containing labels from count function; array of shape(h,w)
     :param array orig_img: array of shape (h,w)
+
     :return array: array of shape (h,w,3)
     """
     # color the counted cells a random color
@@ -415,7 +426,7 @@ def process_image(img, save_steps=False):
     else:
         return labeled_image
 
-def new_imp_process(img, save_steps=False, mask=None):
+def new_imp_process(img, debug=False, mask=None):
     """
     Applies filters to image in order to count the cells in the image. Can also return images of each step applied
 
@@ -425,17 +436,17 @@ def new_imp_process(img, save_steps=False, mask=None):
                 list of intermediary images (OPT)
                 list of image titles (OPT)
     """
-    if save_steps:
-        steps = []
-        titles = []
+    steps = []  # for debugging use
+    titles = [] # for debugging use
 
+    if debug:
         steps.append(copy(img))
         titles.append('original')
         print('\nStarting processing.')
 
     # unsharp to original
     progress_img = apply_unsharp_filter(img)
-    if save_steps:
+    if debug:
         steps.append(copy(progress_img))
         titles.append('unsharp on orig')
         print('Unsharp filter applied.')
@@ -444,7 +455,7 @@ def new_imp_process(img, save_steps=False, mask=None):
     blur_img = filters.gaussian(img, sigma=2.0)
     edges = get_edges(blur_img)
     progress_img[edges] = 0
-    if save_steps:
+    if debug:
         steps.append(copy(progress_img))
         titles.append('edges on orig to progress')
         print('Edges found.')
@@ -452,7 +463,7 @@ def new_imp_process(img, save_steps=False, mask=None):
     # apply otsu to orig, then apply to progress
     _, otsu_mask = apply_skimage_otsu(blur_img)
     progress_img[otsu_mask] = 0
-    if save_steps:
+    if debug:
         steps.append(copy(progress_img))
         titles.append('otsu on orig to progress')
         print("Otsu's threshold applied.")
@@ -460,7 +471,7 @@ def new_imp_process(img, save_steps=False, mask=None):
     # apply local on orig, then to progress (gets rid of more background)
     _, local_mask = apply_local_threshold(blur_img)
     progress_img[local_mask==0] = 0
-    if save_steps:
+    if debug:
         steps.append(copy(progress_img))
         titles.append('local to progress')
         print("Local threshold applied.")
@@ -469,7 +480,7 @@ def new_imp_process(img, save_steps=False, mask=None):
     # progress_img = morphology.opening(progress_img)#, morphology.disk(3))
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
     progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=1)
-    if save_steps:
+    if debug:
         steps.append(copy(progress_img))
         titles.append('opening applied')
         print("Morphological opening applied.")
@@ -477,20 +488,23 @@ def new_imp_process(img, save_steps=False, mask=None):
     # apply multi otsu on opened, then to opened
     progress_img, _ = apply_multi_otsu(progress_img)
     progress_img[progress_img!=0] = 1
-    if save_steps:
+    if debug:
         steps.append(copy(progress_img))
         titles.append('multi otsu applied')
         print("Multi Otsu threshold applied (separated background from foreground).")
     
-    try:
-        progress_img[mask] = 0
-        print('Applying ROI mask.')
-    except:
-        pass
+    # if mask is not None:
+    #     progress_img[mask] = 0
+
+    # try:
+    #     progress_img[mask] = 0
+    #     print('Applying ROI mask.')
+    # except:
+    #     pass
 
     # count binary image
     final_image, count = measure.label(progress_img, connectivity=1, return_num=True)
-    if save_steps:
+    if debug:
         steps.append(copy(final_image))
         titles.append(f'counted: {count}')
         print(f'Image segmented. {count} cells counted.')
@@ -499,29 +513,30 @@ def new_imp_process(img, save_steps=False, mask=None):
     size = 10
     final_image = morphology.remove_small_objects(final_image, min_size=size)
     final_image, count = measure.label(final_image, connectivity=1, return_num=True)
-    if save_steps:
+    if debug:
         steps.append(copy(final_image))
         titles.append(f'artifacts removed <= {size}. Count: {count}')
         print(f'Removed artifacts smaller than {size} and recounted: {count} cells.')
 
-    if save_steps:
-        return final_image, steps, titles
-    else:
-        return final_image
+    # if save_steps:
+    return final_image, steps, titles
+    # else:
+    #     return final_image
 
-def combine_channels(pcna_img, dapi_img, save_steps = False):
+def combine_channels(pcna_img, dapi_img, debug = False):
     # pcna and dapi images must be labeled!
-
+    steps = []
+    titles = []
     # find areas where both pictures have content
     img_and = np.logical_and(pcna_img, dapi_img)
-    if save_steps:
-        steps = [copy(img_and)]
-        titles = ['pcna AND dapi']
+    if debug:
+        steps.append(copy(img_and))
+        titles.append('pcna AND dapi')
         print('Combined images using logical AND operation.')
 
     # label and count
     img_and, count = measure.label(img_and, connectivity=1, return_num=True)
-    if save_steps:
+    if debug:
         steps.append(copy(img_and))
         titles.append(f'counted {count}')
         print(f'Counted image: {count} cells')
@@ -531,33 +546,34 @@ def combine_channels(pcna_img, dapi_img, save_steps = False):
     img_and = morphology.remove_small_objects(img_and, min_size=size)
     # relabel
     img_and, count = measure.label(img_and, connectivity=1, return_num=True)
-    if save_steps:
+    if debug:
         steps.append(copy(img_and))
         titles.append(f'removed artifacts < {size}')
         print(f'Removed artifacts smaller than {size} and recounted: {count} cells')
 
-    if save_steps:
-        return img_and, steps, titles
-    else:
-        return img_and
+    # if debug:
+    return img_and, steps, titles
+    # else:
+    #     return img_and
 
-def get_cell_sizes(img, filename:str):
+def get_cell_sizes(img, filename:str, debug=False):
     """
     Will count the size of each object in the given image and output it to the given file.
 
     :param img: image that is a labeled format
     :param filename: file to output data, a csv file
+    :param debug: if True, show print statements regarding process of function
     """
     # loop through number of cells and sum total pixels
 
     num_cells = np.max(img)
-    print(f'Size of image: {img.shape[0]} x {img.shape[1]}')
-    print(f'number of cells: {num_cells}\n')
 
     try:
         f = open(filename, 'x')
     except FileExistsError as e:
         f = open(filename, 'w')
+
+    cells = []
 
     f.write('cell,size,x-coordinate,y-coordinate,\n')
 
@@ -573,5 +589,12 @@ def get_cell_sizes(img, filename:str):
 
         # print(f'{i+1}: {x},{y} = {img[x][y]}')
         f.write(f'{i+1},{size},{x},{y},\n')
+        cells.append(size)
     
     f.close()
+
+    if debug:
+        print(f'Saved cell size info in - {filename} -')
+        print(f'Size of image: {img.shape[0]} x {img.shape[1]}')
+        print(f'Number of cells: {num_cells}')
+        print(f'Average cell size: {np.mean(cells)} pixels\n')
