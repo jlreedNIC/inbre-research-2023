@@ -16,6 +16,7 @@ import os
 # name of folder/directory that contains nd2 files for analyzing
 # may have issue if there is a file that is not .nd2 in there
 # TO DO: handle not .nd2 files
+# WINDOWS USERS: if your system uses the character '\' please use '\\' instead in your filepath
 folder_loc = 'nd2_files/'
 
 # name of folder/directory to create to hold all .csv files that have the sizes of cells
@@ -73,11 +74,13 @@ for file in all_files:
         except Exception as e:
             print(f'Error opening {file}.')
             print(e)
-            exit(1)
+            # exit(1)
+            continue
         
         # rename for file conventions
         if channel == 'far red':
             channel = 'pcna'
+        channel.swapcase() # make it all capitals
 
         # compress stacks to single img
         img = sf.compress_stack(img_stack[0])
@@ -122,7 +125,8 @@ for file in all_files:
         except Exception as e:
             print(f'Error opening {file}.')
             print(e)
-            exit(1)
+            # exit(1)
+            continue
 
         # compress stacks to single img
         pcna_img = sf.compress_stack(pcna_imgs)
