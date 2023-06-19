@@ -446,7 +446,7 @@ def get_cell_sizes(img, filename:str, debug=False):
     num_cells = np.max(img)
 
     if debug:
-        print(f'Saving cell size info in - {filename} - ...')
+        print(f'\nSaving cell size info in - {filename} - ...')
 
     try:
         f = open(filename, 'x')
@@ -476,4 +476,4 @@ def get_cell_sizes(img, filename:str, debug=False):
     if debug:
         print(f'Size of image: {img.shape[0]} x {img.shape[1]}')
         print(f'Number of cells: {num_cells}')
-        print(f'Average cell size: {np.mean(cells)} pixels\n')
+        print(f'Average cell size: {np.mean(cells)} pixels')
