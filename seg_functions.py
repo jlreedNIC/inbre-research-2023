@@ -267,57 +267,6 @@ def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1, figure_title = None
     plt.tight_layout()
     plt.show()
 
-def create_transparent_img(orig):
-    """DEPRECATED. Converts an RGB image into RGBA and makes all black pixels transparent by looping through image.
-
-    :param array orig: image in array format with shape (h,w,3)
-    :return array: image with shape (h,w,4)
-    """
-    transparent = np.zeros((orig.shape[0], orig.shape[1], 4))
-    # to make more efficient
-    # what if we reshape to h*w, 4
-    # can we then search for index where 0,0,0 exists? then invert and set last value?
-
-    for i in range(0, len(orig)):
-        for j in range(0, len(orig[0])):
-            isBlack = True # for checking if all rgb values => black
-            for k in range(0,3):
-                transparent[i][j][k] = orig[i][j][k]
-
-                if transparent[i][j][k] != 0:
-                    isBlack = False
-
-            if not isBlack:
-                transparent[i][j][3] = 1
-    
-    return transparent
-
-def combine_imgs(orig, new_img):
-    """DEPRECATED. Combines an image in gray scale with an image with a transparent background into a single image to create an overlay by looping through images.
-
-    :param array orig: image in array format with shape (h,w)
-    :param array new_img: image in array with shape (h,w,4)
-    :return array: image with shape (h,w,4)
-    """
-    # orig must be a scalar
-    gray_rgb = [.5,.5,.5]
-    orig = orig/255 # put into 255 range
-
-    combine = np.zeros((orig.shape[0], orig.shape[1], 4))
-
-    for i in range(0, len(orig)):
-        for j in range(0, len(orig[0])):
-            if new_img[i][j][3] == 1:
-                # use new_img pixel
-                combine[i][j] = new_img[i][j]
-            else:
-                # convert scalar orig into rgb and put into new
-                for k in range(0,3):
-                    combine[i][j][k] = orig[i][j]*gray_rgb[k]
-                combine[i][j][3] = 1
-    
-    return combine
-
 def create_image_overlay(labeled_image, orig_img):
     """Combines two images by first creating an rbg image from the labeled image, 
     then overlaying the original image onto the colored image wherever the colored image is black.
@@ -353,78 +302,6 @@ def create_image_overlay(labeled_image, orig_img):
     colored_labeled_img[non_c] = gray_img[non_c]
 
     return colored_labeled_img
-
-def process_image(img, save_steps=False):
-    if save_steps:
-        steps = []
-        titles = []
-
-        steps.append(copy(img))
-        titles.append('original')
-    
-    # apply edge detection to orig
-    edge_canny = feature.canny(img, sigma=1.5)
-    if save_steps:
-        steps.append(copy(edge_canny))
-        titles.append('edge detection')
-
-        print('edge detection done')
-    
-    # apply otsus to orig
-    otsus_img, inv_mask = apply_otsus_threshold(img)
-    if save_steps:
-        steps.append(copy(otsus_img))
-        titles.append('orig with otsus')
-
-        print('otsus threshold done')
-    
-    # overlay otsus binary mask on edge detection img to get rid of background
-    edge_canny[inv_mask] = 0
-    # overlay edges onto otsus to outline cells
-    otsus_img[edge_canny] = 0
-    if save_steps:
-        steps.append(copy(otsus_img))
-        titles.append('otsus applied to edge detection')
-
-    # apply basic thresholding after edge detection
-    otsus_img = custom_threshold(otsus_img)
-    if save_steps:
-        steps.append(copy(otsus_img))
-        titles.append('basic threshold')
-
-        print('basic threshold done')
-    
-    # apply erosion and dialation to 'open' image and get cells
-    kernel = np.ones((5,5))
-    # kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(5,5))
-    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
-    opening = cv2.morphologyEx(otsus_img, cv2.MORPH_OPEN, kernel, iterations=1)
-    if save_steps:
-        steps.append(opening)
-        titles.append("'opened' cells")
-    
-    # apply mask
-    cells = opening != 0
-    opening[cells] = 255
-
-    if save_steps:
-        steps.append(opening)
-        titles.append('opened masked cells')
-
-        print('opening done')
-
-    # count cells
-    labeled_image, count = measure.label(opening, connectivity=1, return_num=True)
-    if save_steps:
-        steps.append(labeled_image)
-        titles.append(f'counted {count} cells')
-
-        print('cells counted')
-    
-    if save_steps:
-        return labeled_image, steps, titles
-    else:
-        return labeled_image
 
 def new_imp_process(img, debug=False, mask=None):
     """
@@ -568,6 +445,9 @@ def get_cell_sizes(img, filename:str, debug=False):
 
     num_cells = np.max(img)
 
+    if debug:
+        print(f'Saving cell size info in - {filename} - ...')
+
     try:
         f = open(filename, 'x')
     except FileExistsError as e:
@@ -594,7 +474,6 @@ def get_cell_sizes(img, filename:str, debug=False):
     f.close()
 
     if debug:
-        print(f'Saved cell size info in - {filename} -')
         print(f'Size of image: {img.shape[0]} x {img.shape[1]}')
         print(f'Number of cells: {num_cells}')
         print(f'Average cell size: {np.mean(cells)} pixels\n')
