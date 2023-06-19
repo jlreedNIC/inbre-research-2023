@@ -26,7 +26,7 @@ cell_folder = 'cell_sizes/'
 showSteps = True
 
 # only show a single channel
-singleChannel = True
+singleChannel = False
 
 # if single channel is True, which channel do you want to see
 # use these variables WITH quotations:    'far red'    or     'DAPI'
