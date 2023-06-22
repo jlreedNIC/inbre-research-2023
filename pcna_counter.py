@@ -93,8 +93,11 @@ for file in all_files:
         channel_name.swapcase() # make it all capitals
 
         # compress stacks to single img
-        img = sf.compress_stack(img_stack[0])
-        print('\nImages compressed.')
+        # img = sf.compress_stack(img_stack[0])
+        mid_slice = int(len(img_stack)/2)
+        img = img_stack[mid_slice]
+        # print('\nImages compressed.')
+        print('\nMiddle slice of stack found.')
 
         # get roi selection
         roi = ROI(img)
