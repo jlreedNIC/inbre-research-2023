@@ -25,6 +25,19 @@ def open_nd2file(filepath:str, channel_name=['far red', 'DAPI']):
     :return: list of list of images, i.e. far red images will be in img_stacks[0]
     """
     img_stacks = []
+
+    # try:
+    #     imgs = ND2Reader(filepath)
+    # except Exception as e:
+    #     # print(f'Error opening file: {filepath}.')
+    #     # print(e)
+    #     raise(Exception(f'Error opening file: {filepath}'))
+
+    # for i in range(len(channel_name)):
+    #     img_stacks.append(get_imgs_from_channel(imgs, channel_name[i]))
+    
+    # imgs.close()
+
     with ND2Reader(filepath) as imgs:
         for i in range(len(channel_name)):
             img_stacks.append(get_imgs_from_channel(imgs, channel_name[i]))
@@ -370,14 +383,8 @@ def new_imp_process(img, debug=False, mask=None):
         titles.append('multi otsu applied')
         print("Multi Otsu threshold applied (separated background from foreground).")
     
-    # if mask is not None:
-    #     progress_img[mask] = 0
-
-    # try:
-    #     progress_img[mask] = 0
-    #     print('Applying ROI mask.')
-    # except:
-    #     pass
+    if mask is not None:
+        progress_img[mask] = 0
 
     # count binary image
     final_image, count = measure.label(progress_img, connectivity=1, return_num=True)
@@ -404,6 +411,7 @@ def combine_channels(pcna_img, dapi_img, debug = False):
     # pcna and dapi images must be labeled!
     steps = []
     titles = []
+
     # find areas where both pictures have content
     img_and = np.logical_and(pcna_img, dapi_img)
     if debug:
