@@ -99,6 +99,7 @@ for i in range(len(all_files)):
         pass
     sf.get_cell_sizes(result, cell_folder + '/' + all_files[i] + '-cell-counts.csv')
 
+    roi.get_roi_size()
     roi.draw_lines_on_image(dapi_colored, (255,0,0))
     roi.draw_lines_on_image(pcna_colored, (255,0,0))
     roi.draw_lines_on_image(f_color, (255,0,0))
