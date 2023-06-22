@@ -441,7 +441,7 @@ def combine_channels(pcna_img, dapi_img, debug = False):
     # else:
     #     return img_and
 
-def get_cell_sizes(img, filename:str, debug=False):
+def get_cell_sizes(img, filename:str, roi_pcount, debug=False):
     """
     Will count the size of each object in the given image and output it to the given file.
 
@@ -479,9 +479,11 @@ def get_cell_sizes(img, filename:str, debug=False):
         f.write(f'{i+1},{size},{x},{y},\n')
         cells.append(size)
     
+    f.write(f'ROI,{roi_pcount},,,')
     f.close()
 
     if debug:
         print(f'Size of image: {img.shape[0]} x {img.shape[1]}')
         print(f'Number of cells: {num_cells}')
         print(f'Average cell size: {np.mean(cells)} pixels')
+        print(f'ROI size: {roi_pcount} pixels')
