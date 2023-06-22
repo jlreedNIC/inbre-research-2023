@@ -106,6 +106,22 @@ class ROI:
         
         return self.mask
     
+    def get_roi_size(self):
+        """
+        If there is not a mask created, create a mask. 
+        Then sum the pixels in the mask that are the ROI and return the count.
+
+        :return: number of pixels contained in the roi
+        """
+        self.create_roi_mask()
+
+        size = (self.mask == False).sum()
+
+        # print(f'num cells total: {self.mask.shape[0]*self.mask.shape[1]}')
+        # print(f'ROI size: {size}')
+        return size
+
+
     def draw_lines_on_image(self, image, color=None):
         """
         Draws lines of selected roi on given image for display. Can change the color.
