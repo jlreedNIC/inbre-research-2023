@@ -15,8 +15,6 @@ from roi_class import ROI
 # -------------------------
 
 # name of folder/directory that contains nd2 files for analyzing
-# may have issue if there is a file that is not .nd2 in there
-# TO DO: handle not .nd2 files
 # WINDOWS USERS: if your system uses the character '\' please use '\\' instead in your filepath
 folder_loc = 'nd2_files/'
 
@@ -25,9 +23,10 @@ cell_size_folder = 'cell_sizes/'
 
 # Whether or not to show the intermediary steps in cell count process
 # this is the default when looking at a single channel
-showSteps = True
+showSteps = False
 
 # only show a single channel
+# Can only show the intermediary steps
 singleChannel = False
 
 # if single channel is True, which channel do you want to see
@@ -40,7 +39,9 @@ channel = 'far red'
 singleImage = False
 
 # if singleImage is True, only process the file given below
-user_file = 'gl22-6dpi-3R-#12-sxn3P002.nd2'
+# user_file = 'gl22-6dpi-3R-#12-sxn3P002.nd2'
+user_file = '6dpi-uoi2500Tg-2R-#17-sxn4005.nd2'
+# user_file = 'gl22-6dpi-6R-#11-sxn4P001.nd2'
 
 # -------------------
 # DO NOT CHANGE ANY CODE BELOW THIS LINE
@@ -53,17 +54,18 @@ try:
 except FileExistsError as e:
     # print(f'{cell_size_folder} exists!')
     pass
-    
-# file = all_files[1]
 
 if singleImage:
     all_files = [user_file]
 else:
     all_files = os.listdir(folder_loc)
 
+all_files.sort()
+
+print(f'Found {len(all_files)} files. Starting process now...')
 # loop through every file in list of files
 for file in all_files:
-    print(f'Found {len(all_files)} files. Starting process now...')
+    
     if singleChannel:
         if channel == None:
             print('You must change the channel name.')
@@ -76,6 +78,10 @@ for file in all_files:
         except Exception as e:
             print(f'Error opening {file}.')
             print(e)
+
+            # put file name in an output file for later review
+            with open('file_error_files.txt','a') as f:
+                f.write(f'{file}\n')
             # exit(1)
             continue
         
@@ -107,11 +113,19 @@ for file in all_files:
         print('\nColoring image and overlaying with original...')
         color = sf.create_image_overlay(labeled, img)
 
+        # show roi lines on finished image
+        roi.draw_lines_on_image(color, (255,0,0))
+        steps.append(color)
+        titles.append(f'Final count: {count}')
+
         # Output results to terminal
         print(f'\nFinal count:   {count} cells')
 
+        # get roi size
+        roi_size = roi.get_roi_size()
+
         # count cell sizes of the result image
-        sf.get_cell_sizes(labeled, cell_size_folder + file[:-4] + '-' + channel_name + '-cell-counts.csv', debug=True)
+        sf.get_cell_sizes(labeled, cell_size_folder + file[:-4] + '-' + channel_name + '-cell-counts.csv', roi_pcount=roi_size, debug=True)
 
         # show images
         print('\nDisplaying image...')
@@ -135,17 +149,24 @@ for file in all_files:
         except Exception as e:
             print(f'Error opening {file}.')
             print(e)
+
+            # put file name in an output file for later review
+            with open('file_error_files.txt','a') as f:
+                f.write(f'{file}\n')
             # exit(1)
             continue
 
         # compress stacks to single img
-        pcna_img = sf.compress_stack(pcna_imgs)
-        dapi_img = sf.compress_stack(dapi_imgs)
+        mid_slice = int(len(pcna_imgs)/2)
+        # pcna_img = sf.compress_stack(pcna_imgs)
+        # dapi_img = sf.compress_stack(dapi_imgs)
+        pcna_img = pcna_imgs[mid_slice]
+        dapi_img = dapi_imgs[mid_slice]
         if showSteps:
-            print('\nImages compressed.')
+            # print('\nImages compressed.')
+            print(f'\nMiddle slice found at {mid_slice}.')
 
         # select roi
-        # _, mask = sf.select_roi(pcna_img, True)
         roi = ROI(pcna_img)
         roi.get_roi()
         roi_mask = roi.create_roi_mask()
@@ -180,8 +201,11 @@ for file in all_files:
         print(f'DAPI image:   {dapi_count} cells')
         print(f'Final result: {result_count} cells\n')
 
+        # get roi size
+        roi_size = roi.get_roi_size()
+
         # count cell sizes of the result image and put into file
-        sf.get_cell_sizes(result_labeled, cell_size_folder + file + '-cell-counts.csv', debug=showSteps)
+        sf.get_cell_sizes(result_labeled, cell_size_folder + file + '-cell-counts.csv', roi_pcount=roi_size, debug=showSteps)
 
         if showSteps:
             print('Showing PCNA image filter steps...\n')
@@ -225,5 +249,5 @@ for file in all_files:
             figure_title= file[:-4] + '-RESULTS.nd2'
         )
 
-print('End of file list.')
+print('\nEnd of file list.')
 print('Thank you for using the PCNA-Counter!')
