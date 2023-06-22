@@ -8,6 +8,7 @@
 import seg_functions as sf
 import numpy as np
 import os
+from roi_class import ROI
 
 # -------------------------
 # user changeable variables
@@ -20,7 +21,7 @@ import os
 folder_loc = 'nd2_files/'
 
 # name of folder/directory to create to hold all .csv files that have the sizes of cells
-cell_folder = 'cell_sizes/'
+cell_size_folder = 'cell_sizes/'
 
 # Whether or not to show the intermediary steps in cell count process
 # this is the default when looking at a single channel
@@ -48,9 +49,9 @@ user_file = 'gl22-6dpi-3R-#12-sxn3P002.nd2'
 
 # create folder to store cell counts
 try:
-    os.mkdir(cell_folder)
+    os.mkdir(cell_size_folder)
 except FileExistsError as e:
-    # print(f'{cell_folder} exists!')
+    # print(f'{cell_size_folder} exists!')
     pass
     
 # file = all_files[1]
@@ -62,6 +63,7 @@ else:
 
 # loop through every file in list of files
 for file in all_files:
+    print(f'Found {len(all_files)} files. Starting process now...')
     if singleChannel:
         if channel == None:
             print('You must change the channel name.')
@@ -79,16 +81,24 @@ for file in all_files:
         
         # rename for file conventions
         if channel == 'far red':
-            channel = 'pcna'
-        channel.swapcase() # make it all capitals
+            channel_name = 'pcna'
+        else:
+            channel_name = channel
+        channel_name.swapcase() # make it all capitals
 
         # compress stacks to single img
         img = sf.compress_stack(img_stack[0])
         print('\nImages compressed.')
 
+        # get roi selection
+        roi = ROI(img)
+        roi.get_roi()
+        print('\nCreating ROI mask...')
+        roi_mask = roi.create_roi_mask()
+
         # process and count imgs
         print('\nApplying filters...')
-        labeled, steps, titles = sf.new_imp_process(img, debug=True)
+        labeled, steps, titles = sf.new_imp_process(img, debug=True, mask=roi_mask)
 
         # get counts from each image
         count = np.max(labeled)
@@ -101,7 +111,7 @@ for file in all_files:
         print(f'\nFinal count:   {count} cells')
 
         # count cell sizes of the result image
-        sf.get_cell_sizes(labeled, cell_folder + file[:-4] + '-' + channel + '-cell-counts.csv', debug=True)
+        sf.get_cell_sizes(labeled, cell_size_folder + file[:-4] + '-' + channel_name + '-cell-counts.csv', debug=True)
 
         # show images
         print('\nDisplaying image...')
@@ -114,11 +124,11 @@ for file in all_files:
             steps,
             titles,
             ncols=int(cols/3), nrows=3,
-            figure_title= file[:-4] + '-' + channel + '-RESULTS.nd2'
+            figure_title= file[:-4] + '-' + channel_name + '-RESULTS.nd2'
         )
     else:
         # 2 channels
-        print(f'Opening file: - {file} -\n')
+        print(f'Opening file: - {file} -')
         
         try:
             pcna_imgs, dapi_imgs = sf.open_nd2file(folder_loc + file)
@@ -134,13 +144,16 @@ for file in all_files:
         if showSteps:
             print('\nImages compressed.')
 
-        # # select roi
+        # select roi
         # _, mask = sf.select_roi(pcna_img, True)
+        roi = ROI(pcna_img)
+        roi.get_roi()
+        roi_mask = roi.create_roi_mask()
 
         # process and count imgs
         # pcna_steps and pcna_titles will be empty lists if showSteps is selected
-        pcna_labeled, pcna_steps, pcna_titles = sf.new_imp_process(pcna_img, debug=showSteps)
-        dapi_labeled, dapi_steps, dapi_titles = sf.new_imp_process(dapi_img, debug=showSteps)
+        pcna_labeled, pcna_steps, pcna_titles = sf.new_imp_process(pcna_img, debug=showSteps, mask=roi_mask)
+        dapi_labeled, dapi_steps, dapi_titles = sf.new_imp_process(dapi_img, debug=showSteps, mask=roi_mask)
         if showSteps:
             print('\nApplying filters...')
 
@@ -167,8 +180,8 @@ for file in all_files:
         print(f'DAPI image:   {dapi_count} cells')
         print(f'Final result: {result_count} cells\n')
 
-        # count cell sizes of the result image
-        sf.get_cell_sizes(result_labeled, cell_folder + file + '-cell-counts.csv', debug=showSteps)
+        # count cell sizes of the result image and put into file
+        sf.get_cell_sizes(result_labeled, cell_size_folder + file + '-cell-counts.csv', debug=showSteps)
 
         if showSteps:
             print('Showing PCNA image filter steps...\n')
@@ -198,6 +211,12 @@ for file in all_files:
             )
 
             print('Showing final image results...\n')
+        
+        # put roi lines on final image
+        roi.draw_lines_on_image(dapi_color, color=(255,0,0))
+        roi.draw_lines_on_image(pcna_color, color=(255,0,0))
+        roi.draw_lines_on_image(result_color, color=(255,0,0))
+        
         # show results
         sf.use_subplots(
             [dapi_img, dapi_color, pcna_img, pcna_color, result_color],
