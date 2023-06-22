@@ -18,8 +18,6 @@ from roi_class import ROI
 config = sf.get_config()
 
 # name of folder/directory that contains nd2 files for analyzing
-# Best practice: Use the entire filepath.
-# WINDOWS USERS: if your system uses the character '\' please use '\\' instead in your filepath
 folder_loc = config['folder_loc']
 
 # name of folder/directory to create to hold all .csv files that have the sizes of cells
@@ -30,12 +28,9 @@ cell_size_folder = config['cell_size_folder']
 showSteps = config['showSteps']
 
 # only show a single channel
-# Can only show the intermediary steps
 singleChannel = config['singleChannel']
 
 # if single channel is True, which channel do you want to see
-# use these variables WITH quotations:    'far red'    or     'DAPI'
-# can work with any actual channel name
 channel = config['channel']
 
 # Whether or not to show a SINGLE user-specified file at a time
