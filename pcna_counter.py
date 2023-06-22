@@ -224,3 +224,6 @@ for file in all_files:
             ncols=5,
             figure_title= file[:-4] + '-RESULTS.nd2'
         )
+
+print('End of file list.')
+print('Thank you for using the PCNA-Counter!')
