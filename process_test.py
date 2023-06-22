@@ -46,11 +46,13 @@ with ND2Reader(folder_loc + file_names[0]) as imgs:
 #         sf.use_subplots([img, colored_img, img2, colored_img2], ['pcna orig', f'final result: {count}', 'DAPI orig', f'final: {count2}'], nrows = 2)
 
 # ---- currently loops through all files in nd2 folder
+
+from roi_class import ROI
 print(f'Found {len(all_files)} files. Starting now...\n')
 for i in range(len(all_files)):
 # for i in range(1):
-    print(f'Now opening - {all_files[i]} -')
-    start = sf.dt.datetime.now()
+    print(f'Now opening file {i} - {all_files[i]} -')
+    
 
     with ND2Reader(folder_loc + all_files[i]) as imgs:
         try:
@@ -64,13 +66,17 @@ for i in range(len(all_files)):
     dapi_stack = sf.compress_stack(neuron_imgs)
     pcna_stack = sf.compress_stack(pcna_imgs)
 
-    pcna_stack, roi_mask = sf.select_roi(pcna_stack, True)
+    # pcna_stack, roi_mask = sf.select_roi(pcna_stack, True)
+    roi = ROI(pcna_stack)
+    roi.get_roi()
+    roi_mask = roi.create_roi_mask()
 
+    start = sf.dt.datetime.now()
     # put images through multiple levels of filtering and count resulting binary image
-    dapi_labeled = sf.new_imp_process(dapi_stack, mask=roi_mask)
-    pcna_labeled = sf.new_imp_process(pcna_stack, mask=roi_mask)
+    dapi_labeled,_,_ = sf.new_imp_process(dapi_stack, mask=roi_mask)
+    pcna_labeled,_,_ = sf.new_imp_process(pcna_stack, mask=roi_mask)
     # AND images together and count again
-    result = sf.combine_channels(pcna_labeled, dapi_labeled)
+    result, _, _ = sf.combine_channels(pcna_labeled, dapi_labeled)
 
     # get counts from each image
     dapi_count = sf.np.max(dapi_labeled)
@@ -93,6 +99,9 @@ for i in range(len(all_files)):
         pass
     sf.get_cell_sizes(result, cell_folder + '/' + all_files[i] + '-cell-counts.csv')
 
+    roi.draw_lines_on_image(dapi_colored, (255,0,0))
+    roi.draw_lines_on_image(pcna_colored, (255,0,0))
+    roi.draw_lines_on_image(f_color, (255,0,0))
     # show images
     sf.use_subplots([dapi_stack, dapi_colored, pcna_stack, pcna_colored, f_color], 
                     ['dapi orig', f'dapi result: {dapi_count}', 'pcna orig', f'pcna result: {pcna_count}', f'final result: {f_count}'],
