@@ -78,17 +78,24 @@ class ROI:
 
         # print instructions
         print("\nLeft click to select a point. Right click or type 'd' to connect your last point to the first point.")
-        print("Type 'c' to exit and move to the next step.")
+        print("Type 'c' to exit and move to the next step or exit the window normally.")
 
         # update window
         while True:
             cv2.imshow(self.win_name, self.image)
             key = cv2.waitKey(1)
 
+            if cv2.getWindowProperty(self.win_name, cv2.WND_PROP_VISIBLE) < 1:
+                if not self.shapeDone:
+                    self.draw_line(self.image, self.points[0], self.points[-1])
+                    self.shapeDone = False
+                cv2.destroyAllWindows()
+                break
+
             if key == ord('c'):
                 cv2.destroyAllWindows()
                 break
-            elif key == ord('d'):
+            if key == ord('d'):
                 # close shape
                 self.draw_line(self.image, self.points[0], self.points[-1])
                 self.shapeDone = True
