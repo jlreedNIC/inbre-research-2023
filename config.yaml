@@ -1,0 +1,28 @@
+# name of folder/directory that contains nd2 files for analyzing
+# Best practice: Use the entire filepath.
+# WINDOWS USERS: if your system uses the character '\' please use '\\' instead in your filepath
+folder_loc: '/home/jreed/inbre/inbre-research-2023/nd2_files/'
+
+# name of folder/directory to create to hold all .csv files that have the sizes of cells
+cell_size_folder: 'cell_sizes/'
+
+# Whether or not to show the intermediary steps in cell count process
+# this is the default when looking at a single channel
+showSteps: False
+
+# only show a single channel
+# Can only show the intermediary steps
+singleChannel: False
+
+# if single channel is True, which channel do you want to see
+# use these variables WITH quotations:    'far red'    or     'DAPI'
+# can work with any actual channel name
+channel: 'far red'
+
+# Whether or not to show a SINGLE user specified file at a time
+# still subject to above settings
+singleImage: False
+
+# if singleImage is True, only process the file given below
+# user_file = 'gl22-6dpi-3R-#12-sxn3P002.nd2'
+user_file: '6dpi-uoi2500Tg-2R-#17-sxn4005.nd2'

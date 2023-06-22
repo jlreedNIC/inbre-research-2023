@@ -11,42 +11,39 @@ import os
 from roi_class import ROI
 
 # -------------------------
-# user changeable variables
+# user changeable variables located in config.yaml
+# DO NOT CHANGE THIS CODE (unless you know what you're doing)
 # -------------------------
+
+config = sf.get_config()
 
 # name of folder/directory that contains nd2 files for analyzing
 # Best practice: Use the entire filepath.
 # WINDOWS USERS: if your system uses the character '\' please use '\\' instead in your filepath
-folder_loc = '/home/jreed/inbre/inbre-research-2023/nd2_files/'
+folder_loc = config['folder_loc']
 
 # name of folder/directory to create to hold all .csv files that have the sizes of cells
-cell_size_folder = 'cell_sizes/'
+cell_size_folder = config['cell_size_folder']
 
 # Whether or not to show the intermediary steps in cell count process
 # this is the default when looking at a single channel
-showSteps = False
+showSteps = config['showSteps']
 
 # only show a single channel
 # Can only show the intermediary steps
-singleChannel = False
+singleChannel = config['singleChannel']
 
 # if single channel is True, which channel do you want to see
 # use these variables WITH quotations:    'far red'    or     'DAPI'
 # can work with any actual channel name
-channel = 'far red'
+channel = config['channel']
 
-# Whether or not to show a SINGLE user specified file at a time
+# Whether or not to show a SINGLE user-specified file at a time
 # still subject to above settings
-singleImage = False
+singleImage = config['singleImage']
 
 # if singleImage is True, only process the file given below
-# user_file = 'gl22-6dpi-3R-#12-sxn3P002.nd2'
-user_file = '6dpi-uoi2500Tg-2R-#17-sxn4005.nd2'
-# user_file = 'gl22-6dpi-6R-#11-sxn4P001.nd2'
-
-# -------------------
-# DO NOT CHANGE ANY CODE BELOW THIS LINE
-# -------------------
+user_file = config['user_file']
 
 
 # create folder to store cell counts

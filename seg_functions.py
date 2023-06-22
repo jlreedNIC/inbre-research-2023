@@ -11,10 +11,15 @@ import matplotlib.pyplot as plt
 import cv2
 import datetime as dt
 from copy import copy
+import yaml
 
 from skimage import filters, feature, color, measure, morphology
 
-    
+def get_config():
+    with open('config.yaml', 'r') as f:
+        val = yaml.safe_load(f)
+    return val
+
 def open_nd2file(filepath:str, channel_name=['far red', 'DAPI']):
     """
     Opens the nd2 file at the filepath and grabs all images in the specified channels. The default channels are 'far red' (pcna marker) and 'DAPI' (neurons).
