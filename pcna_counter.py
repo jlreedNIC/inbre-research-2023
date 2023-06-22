@@ -15,8 +15,9 @@ from roi_class import ROI
 # -------------------------
 
 # name of folder/directory that contains nd2 files for analyzing
+# Best practice: Use the entire filepath.
 # WINDOWS USERS: if your system uses the character '\' please use '\\' instead in your filepath
-folder_loc = 'nd2_files/'
+folder_loc = '/home/jreed/inbre/inbre-research-2023/nd2_files/'
 
 # name of folder/directory to create to hold all .csv files that have the sizes of cells
 cell_size_folder = 'cell_sizes/'
