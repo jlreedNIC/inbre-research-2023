@@ -1,7 +1,7 @@
 # ------------
 # @author   Jordan Reed
 # @date     6/21/23
-# @brief    created a class to get a roi on an image.
+# @brief    created a class to get an roi on an image.
 #
 # ------------
 
@@ -19,21 +19,24 @@ class ROI:
         else:
             self.points = points
 
-        self.image = np.array(image)        # copy of image to create an roi on
-        self.win_name = "ROI Selection"     # name of window when capturing coordinates
-        self.shapeDone = False              # is the shape closed
-        self.color = (0,0,0)                # color to draw the lines and fill the polygon with
-        self.mask = None                    # roi binary mask
+        self.image = np.array(image)/np.max(image)      # copy of image to create an roi on
+        self.win_name = "ROI Selection"                 # name of window when capturing coordinates
+        self.shapeDone = False                          # is the shape closed
+        self.color = (0,0,0)                            # color to draw the lines and fill the polygon with
+        self.mask = None                                # roi binary mask
 
-    def draw_line(self, image, p1, p2):
+    def draw_line(self, image, p1, p2, color=None):
         """
         Draws a line on an image from point 1 to point 2.
 
         :param image: image to draw line on, numpy array preferred
         :param p1: point in coordinate form, either tuple or list
         :param p2: point in coordinate form, either tuple or list
+        :param color: list or tuple of rgb value, defaults to None (which turns it black)
         """
-        cv2.line(image, p1, p2, self.color, 3)
+        if color is None:
+            color = self.color
+        cv2.line(img=image, pt1=p1, pt2=p2, color=color, thickness=3)
     
     def get_point(self, event, x, y, flags, parameters):
         """
@@ -90,6 +93,34 @@ class ROI:
                 self.draw_line(self.image, self.points[0], self.points[-1])
                 self.shapeDone = True
     
+    def create_roi_mask(self):
+        """
+        Creates a boolean array that acts as a binary mask based on the points selected
+
+        :return: boolean array
+        """
+        if self.mask is None:
+            pts = np.array(self.points)
+            cv2.fillConvexPoly(self.image, pts, self.color)
+            self.mask = self.image != 0
+        
+        return self.mask
+    
+    def draw_lines_on_image(self, image, color=None):
+        """
+        Draws lines of selected roi on given image for display. Can change the color.
+
+        :param image: Image, numpy array preferred
+        :param color: list or tuple of rgb values, defaults to None
+        """
+        # error handling code
+        if len(self.points) == 0:
+            print("There is no ROI selected. Please make sure to select an ROI first. (Call 'get_roi()')")
+            return
+        
+        for i in range(-1, len(self.points)-1):
+            self.draw_line(image, self.points[i], self.points[i+1], color)
+    
     def apply_roi_mask(self, image):
         """
         Create a polygon shape from the coordinate points and use that shape to apply a binary mask to the image provided
@@ -102,11 +133,12 @@ class ROI:
             print("Image must be the same size as the ROI mask and the original image.")
             return
         
+        self.create_roi_mask()
         # if no mask created yet, create one from points
-        if self.mask is None:
-            pts = np.array(self.points)
-            cv2.fillConvexPoly(temp, pts, self.color)
-            self.mask = temp != 0
+        # if self.mask is None:
+        #     pts = np.array(self.points)
+        #     cv2.fillConvexPoly(temp, pts, self.color)
+        #     self.mask = temp != 0
 
         # apply mask to original image
         image[self.mask] = 0
@@ -117,25 +149,3 @@ class ROI:
             output += f'({p[0]},{p[1]}) '
         return output
 
-# -------------------
-# testing code
-
-# import seg_functions as sf
-
-# pcna_stack, dapi_stack = sf.open_nd2file('nd2_files/6dpi-uoi2500Tg-2R-#17-sxn4003.nd2')
-
-# img = sf.compress_stack(pcna_stack)
-# img /= np.max(img)
-
-# # roi = Shape(img, [[0,0],[20,200],[850,800]])
-# roi = ROI(img)
-# # get roi on img
-# roi.get_roi()
-
-# roi.apply_roi_mask(img)
-
-# cv2.namedWindow('Final', cv2.WINDOW_NORMAL)
-# cv2.imshow('Final', img)
-# cv2.waitKey(0)
-
-# print(roi)
