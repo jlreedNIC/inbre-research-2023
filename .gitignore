@@ -1,5 +1,7 @@
 nd2_files/
 images/
+cell_sizes/
+file_error_files.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
