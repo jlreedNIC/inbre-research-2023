@@ -23,6 +23,21 @@ with ND2Reader(folder_loc + file_names[2]) as imgs:
 
 img = pcna_imgs[1]
 
+# ----- testing yaml config
+# import yaml
+
+# def get_config():
+#     config_file = 'config.yaml'
+#     with open(config_file, 'r') as f:
+#         val = yaml.safe_load(f)
+    
+#     return val
+
+# cfg = get_config()
+# print(cfg)
+# print(cfg['singleChannel'])
+# ------------------
+
 # ----- comparing opencv otsu to skimage otsu
 # otsu_current, _ = sf.apply_otsus_threshold(img)
 
@@ -185,3 +200,15 @@ img = pcna_imgs[1]
 #     ncols=3, nrows=2, figure_title="file name here"
 # )
 # -------------------
+
+# ------- opencv showing text
+
+# sf.cv2.namedWindow('testing', sf.cv2.WINDOW_NORMAL)
+# blank_img = sf.np.ones((100,100))
+# text = "Here are some instructions."
+# font= sf.cv2.FONT_HERSHEY_COMPLEX
+# newImg = sf.cv2.putText(blank_img, text, org=(0,25), fontFace=font, fontScale=.25, color=(0,0,0), thickness=1, lineType=sf.cv2.LINE_AA)
+# sf.cv2.imshow('testing', newImg)
+# sf.cv2.waitKey(0)
+
+# ------------
