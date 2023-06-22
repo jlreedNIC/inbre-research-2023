@@ -27,7 +27,8 @@ Notes:
 - Type `git clone https://github.com/jlreedNIC/inbre-research-2023.git`
 
 ### If you don't have Git:
-- Download the latest package (located on the right hand side of the main GitHub repository).
+- Download the latest release (located on the right hand side of the main GitHub repository).
+    - Either the entire source code or the release code.
 - Extract to the location you want the program.
 
 ### Running the program
