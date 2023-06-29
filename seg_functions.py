@@ -46,6 +46,8 @@ def open_nd2file(filepath:str, channel_name=['far red', 'DAPI']):
     with ND2Reader(filepath) as imgs:
         for i in range(len(channel_name)):
             img_stacks.append(get_imgs_from_channel(imgs, channel_name[i]))
+        
+        img_stacks.append(imgs.metadata['pixel_microns'])
     
     return img_stacks
 
@@ -458,12 +460,14 @@ def combine_channels(pcna_img, dapi_img, debug = False):
     # else:
     #     return img_and
 
-def get_cell_sizes(img, filename:str, roi_pcount=0, debug=False):
+def get_cell_sizes(img, filename:str, roi_pcount=0, pixel_conv = 1, debug=False):
     """
     Will count the size of each object in the given image and output it to the given file.
 
     :param img: image that is a labeled format
     :param filename: file to output data, a csv file
+    :param roi_pcount: the pixel count of the roi
+    :param pixel_conv: the pixels to microns conversion
     :param debug: if True, show print statements regarding process of function
     """
     # loop through number of cells and sum total pixels
@@ -485,6 +489,7 @@ def get_cell_sizes(img, filename:str, roi_pcount=0, debug=False):
     for i in range(num_cells):
         # get size of cell
         size = (img == (i+1)).sum()
+        size /= pixel_conv # convert pixels to microns
         # print(f'cell #{i+1}: {size} pixels')
 
         # get a single index in cell
@@ -493,14 +498,14 @@ def get_cell_sizes(img, filename:str, roi_pcount=0, debug=False):
         y = index[1][0]
 
         # print(f'{i+1}: {x},{y} = {img[x][y]}')
-        f.write(f'{i+1},{size},{x},{y},\n')
+        f.write(f'{i+1},{size:.4f},{x},{y},\n')
         cells.append(size)
     
-    f.write(f'ROI,{roi_pcount},,,')
+    f.write(f'ROI,{roi_pcount/pixel_conv:.1f},,,')
     f.close()
 
     if debug:
         print(f'Size of image: {img.shape[0]} x {img.shape[1]}')
         print(f'Number of cells: {num_cells}')
-        print(f'Average cell size: {np.mean(cells)} pixels')
-        print(f'ROI size: {roi_pcount} pixels')
+        print(f'Average cell size: {np.mean(cells):.4f} microns')
+        print(f'ROI size: {roi_pcount:.1f} microns')

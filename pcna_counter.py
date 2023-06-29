@@ -67,7 +67,7 @@ for file in all_files:
         
         print(f'Opening file: - {file} -\n')
         try:
-            img_stack = sf.open_nd2file(folder_loc + file, channel_name=[channel])
+            img_stack, p_microns = sf.open_nd2file(folder_loc + file, channel_name=[channel])
         except Exception as e:
             print(f'Error opening {file}.')
             print(e)
@@ -121,7 +121,7 @@ for file in all_files:
         roi_size = roi.get_roi_size()
 
         # count cell sizes of the result image
-        sf.get_cell_sizes(labeled, cell_size_folder + file[:-4] + '-' + channel_name + '-cell-counts.csv', roi_pcount=roi_size, debug=True)
+        sf.get_cell_sizes(labeled, cell_size_folder + file[:-4] + '-' + channel_name + '-cell-counts.csv', roi_pcount=roi_size, pixel_conv=p_microns, debug=True)
 
         # show images
         print('\nDisplaying image...')
@@ -141,7 +141,7 @@ for file in all_files:
         print(f'Opening file: - {file} -')
         
         try:
-            pcna_imgs, dapi_imgs = sf.open_nd2file(folder_loc + file)
+            pcna_imgs, dapi_imgs, p_microns = sf.open_nd2file(folder_loc + file)
         except Exception as e:
             print(f'Error opening {file}.')
             print(e)
@@ -152,6 +152,7 @@ for file in all_files:
             # exit(1)
             continue
 
+        print(f'pixels per micron: {p_microns}')
         # compress stacks to single img
         mid_slice = int(len(pcna_imgs)/2)
         # pcna_img = sf.compress_stack(pcna_imgs)
@@ -191,6 +192,11 @@ for file in all_files:
         pcna_color = sf.create_image_overlay(pcna_labeled, pcna_img)
         dapi_color = sf.create_image_overlay(dapi_labeled, dapi_img)
         result_color = sf.create_image_overlay(result_labeled, pcna_img)
+        # if showSteps:
+        #     pcna_steps.append(pcna_color)
+        #     pcna_titles.append('Final PCNA')
+        #     dapi_steps.append(dapi_color)
+        #     dapi_titles.append('Final DAPI')
 
         # Output results to terminal
         print(f'\nPCNA image:   {pcna_count} cells')
@@ -201,7 +207,7 @@ for file in all_files:
         roi_size = roi.get_roi_size()
 
         # count cell sizes of the result image and put into file
-        sf.get_cell_sizes(result_labeled, cell_size_folder + file + '-cell-counts.csv', roi_pcount=roi_size, debug=showSteps)
+        sf.get_cell_sizes(result_labeled, cell_size_folder + file + '-cell-counts.csv', roi_pcount=roi_size,pixel_conv=p_microns, debug=showSteps)
 
         if showSteps:
             print('Showing PCNA image filter steps...\n')
