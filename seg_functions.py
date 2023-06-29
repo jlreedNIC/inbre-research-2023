@@ -285,6 +285,11 @@ def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1, figure_title = None
     plt.tight_layout()
     plt.show()
 
+def show_single_img(img, title:str):
+    fig = plt.imshow(img, vmax=np.max(img), cmap='gray')
+    plt.title(title)
+    plt.show()
+
 def create_image_overlay(labeled_image, orig_img):
     """Combines two images by first creating an rbg image from the labeled image, 
     then overlaying the original image onto the colored image wherever the colored image is black.
@@ -338,6 +343,7 @@ def new_imp_process(img, debug=False, mask=None):
         steps.append(copy(img))
         titles.append('original')
         print('\nStarting processing.')
+        # show_single_img(img, 'Gray Scale')
 
     # unsharp to original
     progress_img = apply_unsharp_filter(img)
@@ -345,6 +351,7 @@ def new_imp_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('unsharp on orig')
         print('Unsharp filter applied.')
+        # show_single_img(progress_img, 'Unsharp Filter Applied')
     
     # blur orig, find edges on orig, then apply to progress
     blur_img = filters.gaussian(img, sigma=2.0)
@@ -354,6 +361,7 @@ def new_imp_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('edges on orig to progress')
         print('Edges found.')
+        # show_single_img(progress_img, 'Edge Detection Applied')
 
     # apply otsu to orig, then apply to progress
     _, otsu_mask = apply_skimage_otsu(blur_img)
@@ -362,6 +370,7 @@ def new_imp_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('otsu on orig to progress')
         print("Otsu's threshold applied.")
+        # show_single_img(progress_img, "Otsu's Threshold Applied")
     
     # apply local on orig, then to progress (gets rid of more background)
     _, local_mask = apply_local_threshold(blur_img)
@@ -370,6 +379,7 @@ def new_imp_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('local to progress')
         print("Local threshold applied.")
+        # show_single_img(progress_img, "Local Thresholding Applied")
 
     # apply opening morph to separate cells better
     # progress_img = morphology.opening(progress_img)#, morphology.disk(3))
@@ -379,6 +389,7 @@ def new_imp_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('opening applied')
         print("Morphological opening applied.")
+        # show_single_img(progress_img, "Opening Operation Applied")
 
     # apply multi otsu on opened, then to opened
     progress_img, _ = apply_multi_otsu(progress_img)
@@ -387,6 +398,7 @@ def new_imp_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('multi otsu applied')
         print("Multi Otsu threshold applied (separated background from foreground).")
+        # show_single_img(progress_img, "Multi Otsu Threshold Applied")
     
     if mask is not None:
         progress_img[mask] = 0
