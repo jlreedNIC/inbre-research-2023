@@ -52,10 +52,10 @@ except ModuleNotFoundError as e:
     everythingInstalled = False
 
 try:
-    import argparse
+    import yaml
 except ModuleNotFoundError as e:
     print(f'\n{e}')
-    print('Please type: pip3 install argparse')
+    print('Please type: pip3 install pyyaml')
     everythingInstalled = False
 
 
