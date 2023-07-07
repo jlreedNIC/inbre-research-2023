@@ -73,7 +73,7 @@ for file in all_files:
             print(e)
 
             # put file name in an output file for later review
-            with open('file_error_files.txt','a') as f:
+            with open('files_wont_open.txt','a') as f:
                 f.write(f'{file}\n')
             # exit(1)
             continue
@@ -147,18 +147,18 @@ for file in all_files:
             print(e)
 
             # put file name in an output file for later review
-            with open('file_error_files.txt','a') as f:
+            with open('files_wont_open.txt','a') as f:
                 f.write(f'{file}\n')
             # exit(1)
             continue
 
-        print(f'pixels per micron: {p_microns}')
         # compress stacks to single img
         mid_slice = int(len(pcna_imgs)/2)
         # pcna_img = sf.compress_stack(pcna_imgs)
         # dapi_img = sf.compress_stack(dapi_imgs)
         pcna_img = pcna_imgs[mid_slice]
         dapi_img = dapi_imgs[mid_slice]
+
         if showSteps:
             # print('\nImages compressed.')
             print(f'\nMiddle slice found at {mid_slice}.')
