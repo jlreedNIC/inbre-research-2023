@@ -109,7 +109,6 @@ def compress_stack(img_stack:list):
 
     mid = int(len(img_stack)/2)
     img = img_stack[mid]
-    # print(img.shape)
 
     if np.mean(img) <= 100:
         print('applying contrast')
@@ -118,8 +117,6 @@ def compress_stack(img_stack:list):
         print(f'mean after: {np.mean(img)} max after: {np.max(img)}')
     
     return img
-    # new_arr = np.amax(img_stack, 0)
-    # return new_arr
 
 def select_roi(img, debug=False):
     temp = copy(img)
@@ -202,27 +199,6 @@ def apply_local_threshold(img):
     img[mask==0] = 0
 
     return img, mask
-
-def apply_otsus_threshold(img):
-    """Applies Otsu's Thresholding method to an image. 
-    First applies a Gaussian Blur, then enhances the brightness and 
-    contrast of the image before applying thresholding.
-
-    :param list img: Image in an array format
-
-    :return array(s): Array with thresholding applied, as well as the binary mask that was applied to image
-    """
-    blur_img = cv2.GaussianBlur(img, (7,7), 0) # apply blur
-    # blur_img = filters.gaussian(img, sigma = 3.0)
-    adj = cv2.convertScaleAbs(blur_img, alpha=.1, beta=100) # enhance contrast and brightness
-    
-
-    # otsu's thresholding
-    T, otsus_method = cv2.threshold(adj, 0,np.max(adj), cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-    otsu_mask = otsus_method > 0
-    adj[otsu_mask] = 0
-
-    return adj, otsu_mask
 
 def apply_skimage_otsu(img):
     """
@@ -360,8 +336,9 @@ def create_image_overlay(labeled_image, orig_img):
 
     return colored_labeled_img
 
-def new_imp_process(img, debug=False, mask=None):
+def pcna_process(img, debug=False, mask=None):
     """
+    good for pcna channel only
     Applies filters to image in order to count the cells in the image. Can also return images of each step applied
 
     :param img: numpy array of scalar values; shape (h,w)
@@ -395,29 +372,18 @@ def new_imp_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('edges on orig to progress')
         print('Edges found.')
-        # show_single_img(edges, 'edges mask')
         # show_single_img(progress_img, 'Edge Detection Applied')
 
     # apply otsu to orig, then apply to progress
-    _, otsu_mask = apply_skimage_otsu(blur_img)
+    _, otsu_mask = apply_multi_otsu(blur_img)
     progress_img[otsu_mask] = 0
     if debug:
         steps.append(copy(progress_img))
-        titles.append('otsu on orig to progress')
+        titles.append('multi otsu on orig to progress')
         print("Otsu's threshold applied.")
         # show_single_img(progress_img, "Otsu's Threshold Applied")
-    
-    # apply local on orig, then to progress (gets rid of more background)
-    _, local_mask = apply_local_threshold(blur_img)
-    progress_img[local_mask==0] = 0
-    if debug:
-        steps.append(copy(progress_img))
-        titles.append('local to progress')
-        print("Local threshold applied.")
-        # show_single_img(progress_img, "Local Thresholding Applied")
 
     # apply opening morph to separate cells better
-    # progress_img = morphology.opening(progress_img)#, morphology.disk(3))
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
     progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=1)
     if debug:
@@ -425,7 +391,7 @@ def new_imp_process(img, debug=False, mask=None):
         titles.append('opening applied')
         print("Morphological opening applied.")
         # show_single_img(progress_img, "Opening Operation Applied")
-
+    
     # apply multi otsu on opened, then to opened
     progress_img, _ = apply_multi_otsu(progress_img)
     progress_img[progress_img!=0] = 1
@@ -454,10 +420,95 @@ def new_imp_process(img, debug=False, mask=None):
         titles.append(f'artifacts removed <= {size}. Count: {count}')
         print(f'Removed artifacts smaller than {size} and recounted: {count} cells.')
 
-    # if save_steps:
     return final_image, steps, titles
-    # else:
-    #     return final_image
+
+def dapi_process(img, debug=False, mask=None):
+    """
+    Only for dapi channel
+    Applies filters to image in order to count the cells in the image. Can also return images of each step applied
+
+    :param img: numpy array of scalar values; shape (h,w)
+    :param save_steps: boolean whether or not to return intermediary images, defaults to False
+    :return: labeled counted image as numpy array
+                list of intermediary images (OPT)
+                list of image titles (OPT)
+    """
+    steps = []  # for debugging use
+    titles = [] # for debugging use
+
+    if debug:
+        steps.append(copy(img))
+        titles.append('original')
+        print('\nStarting processing.')
+        # show_single_img(img, 'Gray Scale')
+
+    # unsharp to original
+    progress_img = apply_unsharp_filter(img)
+    if debug:
+        steps.append(copy(progress_img))
+        titles.append('unsharp on orig')
+        print('Unsharp filter applied.')
+        # show_single_img(progress_img, 'Unsharp Filter Applied')
+    
+    # blur orig, find edges on orig, then apply to progress
+    blur_img = filters.gaussian(img, sigma=2.0)
+    edges = get_edges(blur_img)
+    progress_img[edges] = 0
+    if debug:
+        steps.append(copy(progress_img))
+        titles.append('edges on orig to progress')
+        print('Edges found.')
+        # show_single_img(progress_img, 'Edge Detection Applied')
+
+    # apply otsu to orig, then apply to progress
+    _, otsu_mask = apply_skimage_otsu(blur_img)
+    progress_img[otsu_mask] = 0
+    if debug:
+        steps.append(copy(progress_img))
+        titles.append('otsu on orig to progress')
+        print("Otsu's threshold applied.")
+        # show_single_img(progress_img, "Otsu's Threshold Applied")
+    
+    # apply local on orig, then to progress (gets rid of more background)
+    _, local_mask = apply_local_threshold(blur_img)
+    progress_img[local_mask==0] = 0
+    if debug:
+        steps.append(copy(progress_img))
+        titles.append('local to progress')
+        print("Local threshold applied.")
+        # show_single_img(progress_img, "Local Thresholding Applied")
+
+    # apply opening morph to separate cells better
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
+    progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=1)
+    if debug:
+        steps.append(copy(progress_img))
+        titles.append('opening applied')
+        print("Morphological opening applied.")
+        # show_single_img(progress_img, "Opening Operation Applied")
+
+    progress_img[progress_img != 0] = 1
+    
+    if mask is not None:
+        progress_img[mask] = 0
+
+    # count binary image
+    final_image, count = measure.label(progress_img, connectivity=1, return_num=True)
+    if debug:
+        steps.append(copy(final_image))
+        titles.append(f'counted: {count}')
+        print(f'Image segmented. {count} cells counted.')
+    
+    # remove small objects and relabel array
+    size = 10
+    final_image = morphology.remove_small_objects(final_image, min_size=size)
+    final_image, count = measure.label(final_image, connectivity=1, return_num=True)
+    if debug:
+        steps.append(copy(final_image))
+        titles.append(f'artifacts removed <= {size}. Count: {count}')
+        print(f'Removed artifacts smaller than {size} and recounted: {count} cells.')
+
+    return final_image, steps, titles
 
 def combine_channels(pcna_img, dapi_img, debug = False):
     # pcna and dapi images must be labeled!

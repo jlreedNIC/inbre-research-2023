@@ -100,7 +100,10 @@ for file in all_files:
 
         # process and count imgs
         print('\nApplying filters...')
-        labeled, steps, titles = sf.new_imp_process(img, debug=True, mask=roi_mask)
+        if channel == 'DAPI':
+            labeled, steps, titles = sf.dapi_process(img, debug=True, mask=roi_mask)
+        else:
+            labeled, steps, titles = sf.pcna_process(img, debug=True, mask=roi_mask)
 
         # get counts from each image
         count = np.max(labeled)
@@ -170,8 +173,9 @@ for file in all_files:
 
         # process and count imgs
         # pcna_steps and pcna_titles will be empty lists if showSteps is selected
-        pcna_labeled, pcna_steps, pcna_titles = sf.new_imp_process(pcna_img, debug=showSteps, mask=roi_mask)
-        dapi_labeled, dapi_steps, dapi_titles = sf.new_imp_process(dapi_img, debug=showSteps, mask=roi_mask)
+        # pcna_labeled, pcna_steps, pcna_titles = sf.new_imp_process(pcna_img, debug=showSteps, mask=roi_mask)
+        pcna_labeled, pcna_steps, pcna_titles = sf.pcna_process(pcna_img, debug=showSteps, mask=roi_mask)
+        dapi_labeled, dapi_steps, dapi_titles = sf.dapi_process(dapi_img, debug=showSteps, mask=roi_mask)
         if showSteps:
             print('\nApplying filters...')
 
@@ -207,7 +211,7 @@ for file in all_files:
         roi_size = roi.get_roi_size()
 
         # count cell sizes of the result image and put into file
-        sf.get_cell_sizes(result_labeled, cell_size_folder + file + '-cell-counts.csv', roi_pcount=roi_size,pixel_conv=p_microns, debug=showSteps)
+        sf.get_cell_sizes(result_labeled, cell_size_folder + file[:-4:] + '-cell-counts.csv', roi_pcount=roi_size,pixel_conv=p_microns, debug=showSteps)
 
         if showSteps:
             print('Showing PCNA image filter steps...\n')
