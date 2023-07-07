@@ -60,6 +60,11 @@ def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str, debug=False):
 
     :return list: list of images in a numpy array
     """
+
+    '''
+    TO DO:
+    handle channel name not found
+    such as if channel name not found: channel_num = num passed in'''
     # get all channels and all z
     nd2img.iter_axes = 'cz'
     # get index of channel
@@ -87,9 +92,34 @@ def compress_stack(img_stack:list):
     :return numpy array: a numpy array containing a single image
     """
     # new array created by taking max value of all imgs in stack
-    new_arr = np.amax(img_stack, 0)
 
-    return new_arr
+    '''TO DO: instead of compressing the stack, turn this function into choosing the middle slice and 
+    then applying contrast if mean of image is below certain threshold
+    
+    when applying contrast, it turns the image white, it's hard to see. FIX: make sure every image is eventually converted to be
+    between 0 and 1
+    need to test if there is any decrease in performance of algorithm
+    
+    applying contrast makes pcna channel perform better, but not necessarily the dapi, because just so densely packed in there. 
+    it also loses the edge filter.
+    
+    increasing contrast got edges back, not necessarily the right edges though. 
+    
+    need to look at applying different methods to different channels'''
+
+    mid = int(len(img_stack)/2)
+    img = img_stack[mid]
+    # print(img.shape)
+
+    if np.mean(img) <= 100:
+        print('applying contrast')
+        print(f'mean before: {np.mean(img)} max before: {np.max(img)}')
+        img = cv2.convertScaleAbs(img, alpha=1.0, beta=0) # enhance contrast and brightness
+        print(f'mean after: {np.mean(img)} max after: {np.max(img)}')
+    
+    return img
+    # new_arr = np.amax(img_stack, 0)
+    # return new_arr
 
 def select_roi(img, debug=False):
     temp = copy(img)
@@ -326,6 +356,8 @@ def create_image_overlay(labeled_image, orig_img):
     # set non colored parts to original image
     colored_labeled_img[non_c] = gray_img[non_c]
 
+    # show_single_img(colored_labeled_img, 'Final result')
+
     return colored_labeled_img
 
 def new_imp_process(img, debug=False, mask=None):
@@ -363,6 +395,7 @@ def new_imp_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('edges on orig to progress')
         print('Edges found.')
+        # show_single_img(edges, 'edges mask')
         # show_single_img(progress_img, 'Edge Detection Applied')
 
     # apply otsu to orig, then apply to progress
