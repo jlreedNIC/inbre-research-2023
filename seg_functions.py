@@ -20,7 +20,7 @@ def get_config():
         val = yaml.safe_load(f)
     return val
 
-def open_nd2file(filepath:str, channel_name=['far red', 'DAPI']):
+def open_nd2file(filepath:str, channel_name=['far red', 'DAPI'], channel_num=[0],debug=False):
     """
     Opens the nd2 file at the filepath and grabs all images in the specified channels. The default channels are 'far red' (pcna marker) and 'DAPI' (neurons).
 
@@ -31,46 +31,50 @@ def open_nd2file(filepath:str, channel_name=['far red', 'DAPI']):
     """
     img_stacks = []
 
-    # try:
-    #     imgs = ND2Reader(filepath)
-    # except Exception as e:
-    #     # print(f'Error opening file: {filepath}.')
-    #     # print(e)
-    #     raise(Exception(f'Error opening file: {filepath}'))
+    try:
+        imgs = ND2Reader(filepath)
+    except Exception as e:
+        raise(Exception(f'Error opening file: {filepath}'))
 
-    # for i in range(len(channel_name)):
-    #     img_stacks.append(get_imgs_from_channel(imgs, channel_name[i]))
+    for i in range(len(channel_name)):
+        img_stacks.append(get_imgs_from_channel(imgs, channel_name[i], channel_num=channel_num[i], debug=debug))
+    img_stacks.append(imgs.metadata['pixel_microns'])
     
-    # imgs.close()
+    imgs.close()
 
-    with ND2Reader(filepath) as imgs:
-        for i in range(len(channel_name)):
-            img_stacks.append(get_imgs_from_channel(imgs, channel_name[i]))
+    # with ND2Reader(filepath) as imgs:
+    #     for i in range(len(channel_name)):
+    #         if debug:
+    #             print(f'Getting {channel_name[i]} channel from file.')
+    #         img_stacks.append(get_imgs_from_channel(imgs, channel_name[i], debug=debug))
         
-        img_stacks.append(imgs.metadata['pixel_microns'])
+    #     img_stacks.append(imgs.metadata['pixel_microns'])
+        
     
     return img_stacks
 
-def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str, debug=False):
+def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str, channel_num:int, debug=False):
     """Get all images in the stack for a specified channel in an open ND2 file.
 
     :param ND2Reader nd2img:    Open ND2 file using ND2Reader
     :param str channel_name:    channel name given in string format. Ex - 'far red' or 'DAPI'
+    :param int channel_num:     number of channel in list to default to if the channel name is not found
     :param boolean debug:  if True, show print statements to console
 
     :return list: list of images in a numpy array
     """
 
-    '''
-    TO DO:
-    handle channel name not found
-    such as if channel name not found: channel_num = num passed in'''
     # get all channels and all z
     nd2img.iter_axes = 'cz'
     # get index of channel
-    channel_num = nd2img.metadata['channels'].index(channel_name)+1
-    if debug:
-        print(f'{channel_name} is at channel number {channel_num}')
+    try:
+        cn = nd2img.metadata['channels'].index(channel_name)+1
+
+        if debug:
+            print(f'{channel_name} is at channel number {cn}')
+    except Exception as e:
+        print(f'{channel_name} not found. Defaulting to {channel_num} channel')
+        cn = channel_num
 
     # get number of images in channel
     z_img_num = nd2img.sizes['z']
@@ -78,7 +82,7 @@ def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str, debug=False):
     new_arr = np.zeros((z_img_num, nd2img.metadata['height'], nd2img.metadata['width']))
     # put all images into new array
     index = 0
-    for i in range( (channel_num-1)*z_img_num, channel_num*z_img_num ):
+    for i in range( (cn-1)*z_img_num, cn*z_img_num ):
         new_arr[index] = nd2img[i]
         index += 1
     

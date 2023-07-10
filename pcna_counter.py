@@ -30,6 +30,10 @@ showSteps = config['showSteps']
 # only show a single channel
 singleChannel = config['singleChannel']
 
+# which channel numbers to look at
+channel_nums = config['channel_num']
+print(f'channel nums in config file: {channel_nums}')
+
 # if single channel is True, which channel do you want to see
 channel = config['channel']
 
@@ -67,7 +71,7 @@ for file in all_files:
         
         print(f'Opening file: - {file} -\n')
         try:
-            img_stack, p_microns = sf.open_nd2file(folder_loc + file, channel_name=[channel])
+            img_stack, p_microns = sf.open_nd2file(folder_loc + file, channel_name=[channel], channel_num=channel_nums, debug=showSteps)
         except Exception as e:
             print(f'Error opening {file}.')
             print(e)
@@ -144,7 +148,7 @@ for file in all_files:
         print(f'Opening file: - {file} -')
         
         try:
-            pcna_imgs, dapi_imgs, p_microns = sf.open_nd2file(folder_loc + file)
+            pcna_imgs, dapi_imgs, p_microns = sf.open_nd2file(folder_loc + file, channel_num=channel_nums, debug=showSteps)
         except Exception as e:
             print(f'Error opening {file}.')
             print(e)
