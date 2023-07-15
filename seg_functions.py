@@ -83,42 +83,6 @@ def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str, channel_num:int, d
     
     return new_arr
 
-def select_roi(img, debug=False):
-    temp = copy(img)
-    if np.max(temp) > 1:
-        temp /= np.max(temp)
-
-    if debug:
-        print('\nMaking ROI selection...')
-    
-    # select rectangular roi
-    window = 'ROI Selection'
-    cv2.namedWindow(window, cv2.WINDOW_NORMAL)
-    res = cv2.selectROI(window, temp, showCrosshair=False)
-    res = np.array(res)
-    cv2.destroyAllWindows()
-
-    if debug:
-        print(f'\nPoints: {res}')
-
-    # make copy of image and fill roi with white
-    img_copy = copy(temp)
-    cv2.rectangle(img_copy, res, 1, -1)
-
-    # create mask to show roi
-    mask = img_copy != 1
-    temp[mask] = 0
-
-    # show masked image
-    print('\nPress any key to close the window. DO NOT CLOSE THE WINDOW YOURSELF.')
-    cv2.namedWindow('ROI', cv2.WINDOW_NORMAL)
-    cv2.imshow('ROI', temp)
-    cv2.waitKey(0)
-
-    cv2.destroyWindow('ROI')
-    
-    return temp, mask
-
 def get_edges(img):
     """
     Applies canny edge detection to image and returns boolean image containing edges found.
