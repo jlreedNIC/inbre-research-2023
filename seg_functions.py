@@ -83,40 +83,6 @@ def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str, channel_num:int, d
     
     return new_arr
 
-def compress_stack(img_stack:list):
-    """Combines all images in an array into one image by taking the maximum value of the images for each pixel.
-
-    :param list img_stack: list of gray-scale images
-
-    :return numpy array: a numpy array containing a single image
-    """
-    # new array created by taking max value of all imgs in stack
-
-    '''TO DO: instead of compressing the stack, turn this function into choosing the middle slice and 
-    then applying contrast if mean of image is below certain threshold
-    
-    when applying contrast, it turns the image white, it's hard to see. FIX: make sure every image is eventually converted to be
-    between 0 and 1
-    need to test if there is any decrease in performance of algorithm
-    
-    applying contrast makes pcna channel perform better, but not necessarily the dapi, because just so densely packed in there. 
-    it also loses the edge filter.
-    
-    increasing contrast got edges back, not necessarily the right edges though. 
-    
-    need to look at applying different methods to different channels'''
-
-    mid = int(len(img_stack)/2)
-    img = img_stack[mid]
-
-    if np.mean(img) <= 100:
-        print('applying contrast')
-        print(f'mean before: {np.mean(img)} max before: {np.max(img)}')
-        img = cv2.convertScaleAbs(img, alpha=1.0, beta=0) # enhance contrast and brightness
-        print(f'mean after: {np.mean(img)} max after: {np.max(img)}')
-    
-    return img
-
 def select_roi(img, debug=False):
     temp = copy(img)
     if np.max(temp) > 1:

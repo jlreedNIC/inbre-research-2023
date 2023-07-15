@@ -89,11 +89,9 @@ for file in all_files:
             channel_name = channel
         channel_name.swapcase() # make it all capitals
 
-        # compress stacks to single img
-        # img = sf.compress_stack(img_stack[0])
+        # find middle slice of image stack
         mid_slice = int(len(img_stack)/2)
         img = img_stack[mid_slice]
-        # print('\nImages compressed.')
         print('\nMiddle slice of stack found.')
 
         # get roi selection
@@ -161,8 +159,6 @@ for file in all_files:
 
         # compress stacks to single img
         mid_slice = int(len(pcna_imgs)/2)
-        # pcna_img = sf.compress_stack(pcna_imgs)
-        # dapi_img = sf.compress_stack(dapi_imgs)
         pcna_img = pcna_imgs[mid_slice]
         dapi_img = dapi_imgs[mid_slice]
 
