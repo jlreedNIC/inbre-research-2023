@@ -164,25 +164,6 @@ def apply_multi_otsu(img, c = 3):
 
     return img, mask
 
-def custom_threshold(img, threshold=0):
-    """Applies a basic thresholding by zeroing any pixel less than the given value
-
-    :param array img: image in array format
-    :param int val: threshold value to 0 out, defaults to 0
-
-    :return array: image after thresholding applied
-    """
-    temp = copy(img)
-    if threshold == 0:
-        threshold = np.mean(img[img!=0]) * .9
-    
-    print(f'threshold used: {threshold}')
-    
-    mask = img <= threshold
-    temp[mask] = 0
-
-    return temp
-
 def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1, figure_title = None):
     """Show images in a matplotlib subplot format.
 
