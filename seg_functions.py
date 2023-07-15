@@ -35,21 +35,15 @@ def open_nd2file(filepath:str, channel_name=['far red', 'DAPI'], channel_num=[0]
         imgs = ND2Reader(filepath)
     except Exception as e:
         raise(Exception(f'Error opening file: {filepath}'))
+    
+    if len(channel_name) != len(channel_num):
+        raise(Exception(f'You must provide a default channel number for every channel name.'))
 
     for i in range(len(channel_name)):
         img_stacks.append(get_imgs_from_channel(imgs, channel_name[i], channel_num=channel_num[i], debug=debug))
     img_stacks.append(imgs.metadata['pixel_microns'])
     
-    imgs.close()
-
-    # with ND2Reader(filepath) as imgs:
-    #     for i in range(len(channel_name)):
-    #         if debug:
-    #             print(f'Getting {channel_name[i]} channel from file.')
-    #         img_stacks.append(get_imgs_from_channel(imgs, channel_name[i], debug=debug))
-        
-    #     img_stacks.append(imgs.metadata['pixel_microns'])
-        
+    imgs.close()        
     
     return img_stacks
 
@@ -66,14 +60,15 @@ def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str, channel_num:int, d
 
     # get all channels and all z
     nd2img.iter_axes = 'cz'
+
     # get index of channel
     try:
         cn = nd2img.metadata['channels'].index(channel_name)+1
-
         if debug:
             print(f'{channel_name} is at channel number {cn}')
     except Exception as e:
-        print(f'{channel_name} not found. Defaulting to {channel_num} channel')
+        if debug:
+            print(f'{channel_name} not found. Defaulting to {channel_num} channel')
         cn = channel_num
 
     # get number of images in channel
