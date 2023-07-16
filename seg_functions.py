@@ -12,6 +12,7 @@ import cv2
 import datetime as dt
 from copy import copy
 import yaml
+from matplotlib_scalebar import scalebar
 
 from skimage import filters, feature, color, measure, morphology
 
@@ -203,8 +204,16 @@ def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1, figure_title = None
     plt.tight_layout()
     plt.show()
 
-def show_single_img(img, title:str):
+def show_single_img(img, title:str, pixel_microns=.000325):
+    """
+    Shows a single image using matplotlib for use in creating poster images. 
+
+    :param img: image to show, numpy array preferred
+    :param title: title of image
+    """
+    scale = scalebar.ScaleBar(pixel_microns, units='mm', location='upper right')
     fig = plt.imshow(img, vmax=np.max(img), cmap='gray')
+    plt.gca().add_artist(scale)
     plt.title(title)
     plt.show()
 
@@ -242,7 +251,7 @@ def create_image_overlay(labeled_image, orig_img):
     # set non colored parts to original image
     colored_labeled_img[non_c] = gray_img[non_c]
 
-    # show_single_img(colored_labeled_img, 'Final result')
+    show_single_img(colored_labeled_img, 'Final result')
 
     return colored_labeled_img
 
@@ -264,7 +273,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(img))
         titles.append('original')
         print('\nStarting processing.')
-        # show_single_img(img, 'Gray Scale')
+        show_single_img(img, 'Gray Scale')
 
     # unsharp to original
     progress_img = apply_unsharp_filter(img)
@@ -272,7 +281,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('unsharp on orig')
         print('Unsharp filter applied.')
-        # show_single_img(progress_img, 'Unsharp Filter Applied')
+        show_single_img(progress_img, 'Unsharp Filter Applied')
     
     # blur orig, find edges on orig, then apply to progress
     blur_img = filters.gaussian(img, sigma=2.0)
@@ -282,7 +291,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('edges on orig to progress')
         print('Edges found.')
-        # show_single_img(progress_img, 'Edge Detection Applied')
+        show_single_img(progress_img, 'Edge Detection Applied')
 
     # apply otsu to orig, then apply to progress
     _, otsu_mask = apply_multi_otsu(blur_img)
@@ -291,8 +300,8 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('multi otsu on orig to progress')
         print("Otsu's threshold applied.")
-        # show_single_img(progress_img, "Otsu's Threshold Applied")
-
+        show_single_img(progress_img, "multi Otsu's Threshold Applied")
+    
     # apply opening morph to separate cells better
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
     progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=1)
@@ -300,7 +309,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('opening applied')
         print("Morphological opening applied.")
-        # show_single_img(progress_img, "Opening Operation Applied")
+        show_single_img(progress_img, "Opening Operation Applied")
     
     # apply multi otsu on opened, then to opened
     progress_img, _ = apply_multi_otsu(progress_img)
@@ -309,7 +318,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('multi otsu applied')
         print("Multi Otsu threshold applied (separated background from foreground).")
-        # show_single_img(progress_img, "Multi Otsu Threshold Applied")
+        show_single_img(progress_img, "Multi Otsu Threshold Applied")
     
     if mask is not None:
         progress_img[mask] = 0
@@ -329,6 +338,9 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(final_image))
         titles.append(f'artifacts removed <= {size}. Count: {count}')
         print(f'Removed artifacts smaller than {size} and recounted: {count} cells.')
+        temp = copy(final_image)
+        temp[temp!=0] = 255
+        show_single_img(temp, f"Artifacts <= {size} removed")
 
     return final_image, steps, titles
 
@@ -350,7 +362,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(img))
         titles.append('original')
         print('\nStarting processing.')
-        # show_single_img(img, 'Gray Scale')
+        show_single_img(img, 'Gray Scale')
 
     # unsharp to original
     progress_img = apply_unsharp_filter(img)
@@ -358,7 +370,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('unsharp on orig')
         print('Unsharp filter applied.')
-        # show_single_img(progress_img, 'Unsharp Filter Applied')
+        show_single_img(progress_img, 'Unsharp Filter Applied')
     
     # blur orig, find edges on orig, then apply to progress
     blur_img = filters.gaussian(img, sigma=2.0)
@@ -368,7 +380,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('edges on orig to progress')
         print('Edges found.')
-        # show_single_img(progress_img, 'Edge Detection Applied')
+        show_single_img(progress_img, 'Edge Detection Applied')
 
     # apply otsu to orig, then apply to progress
     _, otsu_mask = apply_skimage_otsu(blur_img)
@@ -377,7 +389,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('otsu on orig to progress')
         print("Otsu's threshold applied.")
-        # show_single_img(progress_img, "Otsu's Threshold Applied")
+        show_single_img(progress_img, "Otsu's Threshold Applied")
     
     # apply local on orig, then to progress (gets rid of more background)
     _, local_mask = apply_local_threshold(blur_img)
@@ -386,7 +398,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('local to progress')
         print("Local threshold applied.")
-        # show_single_img(progress_img, "Local Thresholding Applied")
+        show_single_img(progress_img, "Local Thresholding Applied")
 
     # apply opening morph to separate cells better
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
@@ -395,7 +407,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('opening applied')
         print("Morphological opening applied.")
-        # show_single_img(progress_img, "Opening Operation Applied")
+        show_single_img(progress_img, "Opening Operation Applied")
 
     progress_img[progress_img != 0] = 1
     
@@ -417,6 +429,9 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(final_image))
         titles.append(f'artifacts removed <= {size}. Count: {count}')
         print(f'Removed artifacts smaller than {size} and recounted: {count} cells.')
+        temp = copy(final_image)
+        temp[temp!=0] = 255
+        show_single_img(temp, f"artifacts <= {size} removed")
 
     return final_image, steps, titles
 
@@ -448,6 +463,9 @@ def combine_channels(pcna_img, dapi_img, debug = False):
         steps.append(copy(img_and))
         titles.append(f'removed artifacts < {size}')
         print(f'Removed artifacts smaller than {size} and recounted: {count} cells')
+        temp = copy(img_and)
+        temp[temp!=0] = 255
+        show_single_img(temp, f'Anded channels together')
 
     # if debug:
     return img_and, steps, titles
@@ -483,7 +501,7 @@ def get_cell_sizes(img, filename:str, roi_pcount=0, pixel_conv = 1, debug=False)
     for i in range(num_cells):
         # get size of cell
         size = (img == (i+1)).sum()
-        size /= pixel_conv # convert pixels to microns
+        size *= pixel_conv # convert pixels to microns
         # print(f'cell #{i+1}: {size} pixels')
 
         # get a single index in cell
@@ -495,11 +513,11 @@ def get_cell_sizes(img, filename:str, roi_pcount=0, pixel_conv = 1, debug=False)
         f.write(f'{i+1},{size:.4f},{x},{y},\n')
         cells.append(size)
     
-    f.write(f'ROI,{roi_pcount/pixel_conv:.1f},,,')
+    f.write(f'ROI,{roi_pcount*pixel_conv:.1f},,,')
     f.close()
 
     if debug:
         print(f'Size of image: {img.shape[0]} x {img.shape[1]}')
         print(f'Number of cells: {num_cells}')
         print(f'Average cell size: {np.mean(cells):.4f} microns')
-        print(f'ROI size: {roi_pcount:.1f} microns')
+        print(f'ROI size: {roi_pcount*pixel_conv:.1f} microns')
