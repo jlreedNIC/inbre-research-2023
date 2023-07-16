@@ -58,6 +58,12 @@ except ModuleNotFoundError as e:
     print('Please type: pip3 install pyyaml')
     everythingInstalled = False
 
+try:
+    from matplotlib_scalebar import scalebar
+except ModuleNotFoundError as e:
+    print(f'\n{e}')
+    print('Please type: pip3 install matplotlib-scalebar')
+    everythingInstalled = False
 
 if everythingInstalled:
     print("\nYou are good to start the program! Type: python3 pcna_counter.py")
