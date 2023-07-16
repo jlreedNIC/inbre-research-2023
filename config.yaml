@@ -8,13 +8,14 @@ cell_size_folder: 'cell_sizes/'
 
 # Whether or not to show the intermediary steps in cell count process
 # this is the default when looking at a single channel
-showSteps: False
+showSteps: True
 
 # only show a single channel
 # Can only show the intermediary steps
 singleChannel: False
 
 # if the channel name cannot be found, choose which channel to use instead
+# the first number in the list is assumed to be the PCNA channel and the second is the DAPI channel
 channel_num: [3,4]
 
 # if single channel is True, which channel do you want to see
@@ -24,9 +25,9 @@ channel: 'far red'
 
 # Whether or not to show a SINGLE user specified file at a time
 # still subject to above settings
-singleImage: False
+singleImage: True
 
 # if singleImage is True, only process the file given below
 # user_file = 'gl22-6dpi-3R-#12-sxn3P002.nd2'
-user_file: '6dpi-uoi2500Tg-2R-#17-sxn4005.nd2'
-# user_file: 'S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2'
+# user_file: '6dpi-uoi2500Tg-2R-#17-sxn4005.nd2'
+user_file: 'S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2'
