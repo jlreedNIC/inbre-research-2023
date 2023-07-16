@@ -251,11 +251,11 @@ def create_image_overlay(labeled_image, orig_img):
     # set non colored parts to original image
     colored_labeled_img[non_c] = gray_img[non_c]
 
-    show_single_img(colored_labeled_img, 'Final result')
+    # show_single_img(colored_labeled_img, 'Final result')
 
     return colored_labeled_img
 
-def pcna_process(img, debug=False, mask=None):
+def pcna_process(img, debug=False, mask=None, artifact_size=10):
     """
     good for pcna channel only
     Applies filters to image in order to count the cells in the image. Can also return images of each step applied
@@ -273,7 +273,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(img))
         titles.append('original')
         print('\nStarting processing.')
-        show_single_img(img, 'Gray Scale')
+        # show_single_img(img, 'Gray Scale')
 
     # unsharp to original
     progress_img = apply_unsharp_filter(img)
@@ -281,7 +281,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('unsharp on orig')
         print('Unsharp filter applied.')
-        show_single_img(progress_img, 'Unsharp Filter Applied')
+        # show_single_img(progress_img, 'Unsharp Filter Applied')
     
     # blur orig, find edges on orig, then apply to progress
     blur_img = filters.gaussian(img, sigma=2.0)
@@ -291,7 +291,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('edges on orig to progress')
         print('Edges found.')
-        show_single_img(progress_img, 'Edge Detection Applied')
+        # show_single_img(progress_img, 'Edge Detection Applied')
 
     # apply otsu to orig, then apply to progress
     _, otsu_mask = apply_multi_otsu(blur_img)
@@ -300,7 +300,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('multi otsu on orig to progress')
         print("Otsu's threshold applied.")
-        show_single_img(progress_img, "multi Otsu's Threshold Applied")
+        # show_single_img(progress_img, "multi Otsu's Threshold Applied")
     
     # apply opening morph to separate cells better
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
@@ -309,7 +309,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('opening applied')
         print("Morphological opening applied.")
-        show_single_img(progress_img, "Opening Operation Applied")
+        # show_single_img(progress_img, "Opening Operation Applied")
     
     # apply multi otsu on opened, then to opened
     progress_img, _ = apply_multi_otsu(progress_img)
@@ -318,7 +318,7 @@ def pcna_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('multi otsu applied')
         print("Multi Otsu threshold applied (separated background from foreground).")
-        show_single_img(progress_img, "Multi Otsu Threshold Applied")
+        # show_single_img(progress_img, "Multi Otsu Threshold Applied")
     
     if mask is not None:
         progress_img[mask] = 0
@@ -331,20 +331,20 @@ def pcna_process(img, debug=False, mask=None):
         print(f'Image segmented. {count} cells counted.')
     
     # remove small objects and relabel array
-    size = 10
-    final_image = morphology.remove_small_objects(final_image, min_size=size)
+    final_image = morphology.remove_small_objects(final_image, min_size=artifact_size)
     final_image, count = measure.label(final_image, connectivity=1, return_num=True)
     if debug:
         steps.append(copy(final_image))
-        titles.append(f'artifacts removed <= {size}. Count: {count}')
-        print(f'Removed artifacts smaller than {size} and recounted: {count} cells.')
-        temp = copy(final_image)
-        temp[temp!=0] = 255
-        show_single_img(temp, f"Artifacts <= {size} removed")
+        titles.append(f'artifacts removed <= {artifact_size}. Count: {count}')
+        print(f'Removed artifacts smaller than {artifact_size} and recounted: {count} cells.')
+
+        # temp = copy(final_image)
+        # temp[temp!=0] = 255
+        # show_single_img(temp, f"Artifacts <= {artifact_size} removed")
 
     return final_image, steps, titles
 
-def dapi_process(img, debug=False, mask=None):
+def dapi_process(img, debug=False, mask=None, artifact_size=10):
     """
     Only for dapi channel
     Applies filters to image in order to count the cells in the image. Can also return images of each step applied
@@ -362,7 +362,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(img))
         titles.append('original')
         print('\nStarting processing.')
-        show_single_img(img, 'Gray Scale')
+        # show_single_img(img, 'Gray Scale')
 
     # unsharp to original
     progress_img = apply_unsharp_filter(img)
@@ -370,7 +370,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('unsharp on orig')
         print('Unsharp filter applied.')
-        show_single_img(progress_img, 'Unsharp Filter Applied')
+        # show_single_img(progress_img, 'Unsharp Filter Applied')
     
     # blur orig, find edges on orig, then apply to progress
     blur_img = filters.gaussian(img, sigma=2.0)
@@ -380,7 +380,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('edges on orig to progress')
         print('Edges found.')
-        show_single_img(progress_img, 'Edge Detection Applied')
+        # show_single_img(progress_img, 'Edge Detection Applied')
 
     # apply otsu to orig, then apply to progress
     _, otsu_mask = apply_skimage_otsu(blur_img)
@@ -389,7 +389,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('otsu on orig to progress')
         print("Otsu's threshold applied.")
-        show_single_img(progress_img, "Otsu's Threshold Applied")
+        # show_single_img(progress_img, "Otsu's Threshold Applied")
     
     # apply local on orig, then to progress (gets rid of more background)
     _, local_mask = apply_local_threshold(blur_img)
@@ -398,7 +398,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('local to progress')
         print("Local threshold applied.")
-        show_single_img(progress_img, "Local Thresholding Applied")
+        # show_single_img(progress_img, "Local Thresholding Applied")
 
     # apply opening morph to separate cells better
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
@@ -407,7 +407,7 @@ def dapi_process(img, debug=False, mask=None):
         steps.append(copy(progress_img))
         titles.append('opening applied')
         print("Morphological opening applied.")
-        show_single_img(progress_img, "Opening Operation Applied")
+        # show_single_img(progress_img, "Opening Operation Applied")
 
     progress_img[progress_img != 0] = 1
     
@@ -422,20 +422,20 @@ def dapi_process(img, debug=False, mask=None):
         print(f'Image segmented. {count} cells counted.')
     
     # remove small objects and relabel array
-    size = 10
-    final_image = morphology.remove_small_objects(final_image, min_size=size)
+    final_image = morphology.remove_small_objects(final_image, min_size=artifact_size)
     final_image, count = measure.label(final_image, connectivity=1, return_num=True)
     if debug:
         steps.append(copy(final_image))
-        titles.append(f'artifacts removed <= {size}. Count: {count}')
-        print(f'Removed artifacts smaller than {size} and recounted: {count} cells.')
-        temp = copy(final_image)
-        temp[temp!=0] = 255
-        show_single_img(temp, f"artifacts <= {size} removed")
+        titles.append(f'artifacts removed <= {artifact_size}. Count: {count}')
+        print(f'Removed artifacts smaller than {artifact_size} and recounted: {count} cells.')
+
+        # temp = copy(final_image)
+        # temp[temp!=0] = 255
+        # show_single_img(temp, f"artifacts <= {artifact_size} removed")
 
     return final_image, steps, titles
 
-def combine_channels(pcna_img, dapi_img, debug = False):
+def combine_channels(pcna_img, dapi_img, debug = False, artifact_size=10):
     # pcna and dapi images must be labeled!
     steps = []
     titles = []
@@ -455,17 +455,17 @@ def combine_channels(pcna_img, dapi_img, debug = False):
         print(f'Counted image: {count} cells')
 
     # remove small artifacts
-    size = 7
-    img_and = morphology.remove_small_objects(img_and, min_size=size)
+    img_and = morphology.remove_small_objects(img_and, min_size=artifact_size)
     # relabel
     img_and, count = measure.label(img_and, connectivity=1, return_num=True)
     if debug:
         steps.append(copy(img_and))
-        titles.append(f'removed artifacts < {size}')
-        print(f'Removed artifacts smaller than {size} and recounted: {count} cells')
-        temp = copy(img_and)
-        temp[temp!=0] = 255
-        show_single_img(temp, f'Anded channels together')
+        titles.append(f'removed artifacts < {artifact_size}')
+        print(f'Removed artifacts smaller than {artifact_size} and recounted: {count} cells')
+
+        # temp = copy(img_and)
+        # temp[temp!=0] = 255
+        # show_single_img(temp, f'Anded channels together')
 
     # if debug:
     return img_and, steps, titles

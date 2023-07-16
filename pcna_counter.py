@@ -32,7 +32,6 @@ singleChannel = config['singleChannel']
 
 # which channel numbers to look at
 channel_nums = config['channel_num']
-print(f'channel nums in config file: {channel_nums}')
 
 # if single channel is True, which channel do you want to see
 channel = config['channel']
@@ -43,6 +42,9 @@ singleImage = config['singleImage']
 
 # if singleImage is True, only process the file given below
 user_file = config['user_file']
+
+# minimum size of cells to count
+artifact_size = config['artifact_size']
 
 
 # create folder to store cell counts
@@ -103,9 +105,9 @@ for file in all_files:
         # process and count imgs
         print('\nApplying filters...')
         if channel == 'DAPI':
-            labeled, steps, titles = sf.dapi_process(img, debug=True, mask=roi_mask)
+            labeled, steps, titles = sf.dapi_process(img, debug=True, mask=roi_mask, artifact_size=artifact_size)
         else:
-            labeled, steps, titles = sf.pcna_process(img, debug=True, mask=roi_mask)
+            labeled, steps, titles = sf.pcna_process(img, debug=True, mask=roi_mask, artifact_size=artifact_size)
 
         # get counts from each image
         count = np.max(labeled)
@@ -174,14 +176,14 @@ for file in all_files:
         # process and count imgs
         # pcna_steps and pcna_titles will be empty lists if showSteps is selected
         # pcna_labeled, pcna_steps, pcna_titles = sf.new_imp_process(pcna_img, debug=showSteps, mask=roi_mask)
-        pcna_labeled, pcna_steps, pcna_titles = sf.pcna_process(pcna_img, debug=showSteps, mask=roi_mask)
-        dapi_labeled, dapi_steps, dapi_titles = sf.dapi_process(dapi_img, debug=showSteps, mask=roi_mask)
+        pcna_labeled, pcna_steps, pcna_titles = sf.pcna_process(pcna_img, debug=showSteps, mask=roi_mask, artifact_size=artifact_size)
+        dapi_labeled, dapi_steps, dapi_titles = sf.dapi_process(dapi_img, debug=showSteps, mask=roi_mask, artifact_size=artifact_size)
         if showSteps:
             print('\nApplying filters...')
 
         # perform AND combination
         # result_steps and result_titles will be empty lists if showSteps is selected
-        result_labeled, result_steps, result_titles = sf.combine_channels(pcna_labeled, dapi_labeled, debug=showSteps)
+        result_labeled, result_steps, result_titles = sf.combine_channels(pcna_labeled, dapi_labeled, debug=showSteps, artifact_size=artifact_size)
         if showSteps:
             print('\nCombining channels...')
 
