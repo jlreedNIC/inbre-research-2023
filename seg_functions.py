@@ -3,6 +3,7 @@
 # @date     6/7/23
 # @brief    Image segmentation functions
 #
+#           TO DO: Think about upping iteration on morphological opening as well as adding local thresholding back into pcna process
 # ------------
 
 from nd2reader import ND2Reader
@@ -17,8 +18,22 @@ from matplotlib_scalebar import scalebar
 from skimage import filters, feature, color, measure, morphology
 
 def get_config():
-    with open('config.yaml', 'r') as f:
+    with open('config.yaml', 'r+') as f:
         val = yaml.safe_load(f)
+
+        # find batch number, which is at end of yaml file
+        i = 1
+        char = f.read(f.tell())
+        while char != ':':
+            pos = f.seek(f.tell()-i)
+            char = f.read(f.tell())[0]
+            i += 1
+        
+        # move cursor to that position and overwrite batch number with next number
+        f.seek(pos+1)
+        f.truncate()
+        f.write(f" {val['batch_number']+1}")
+        
     return val
 
 # -----------------------------
@@ -88,7 +103,7 @@ def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str, channel_num:int, d
     
     return new_arr
 
-def get_cell_sizes(img, filename:str, roi_pcount=0, pixel_conv = 1, debug=False):
+def get_cell_sizes(img, nd2_filename:str, save_filename:str, roi_pcount=0, pixel_conv = 1, debug=False):
     """
     Will count the size of each object in the given image and output it to the given file.
 
@@ -103,15 +118,13 @@ def get_cell_sizes(img, filename:str, roi_pcount=0, pixel_conv = 1, debug=False)
     num_cells = np.max(img)
 
     if debug:
-        print(f'\nSaving cell size info in - {filename} - ...')
+        print(f'\nSaving cell size info in - {save_filename} - ...')
 
-    try:
-        f = open(filename, 'x')
-    except FileExistsError as e:
-        f = open(filename, 'w')
+    f = open(save_filename, 'a')
 
     cells = []
 
+    f.write(f'{nd2_filename[:-4]},\n')
     f.write('cell,size,x-coordinate,y-coordinate,\n')
 
     for i in range(num_cells):
@@ -129,7 +142,7 @@ def get_cell_sizes(img, filename:str, roi_pcount=0, pixel_conv = 1, debug=False)
         f.write(f'{i+1},{size:.4f},{x},{y},\n')
         cells.append(size)
     
-    f.write(f'ROI,{roi_pcount*pixel_conv:.1f},,,')
+    f.write(f'ROI,{roi_pcount*pixel_conv:.1f},\n')
     f.close()
 
     if debug:

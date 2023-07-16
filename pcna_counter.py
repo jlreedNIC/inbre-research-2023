@@ -46,6 +46,8 @@ user_file = config['user_file']
 # minimum size of cells to count
 artifact_size = config['artifact_size']
 
+# batch number of files
+batch_num = config['batch_number']
 
 # create folder to store cell counts
 try:
@@ -128,7 +130,7 @@ for file in all_files:
         roi_size = roi.get_roi_size()
 
         # count cell sizes of the result image
-        sf.get_cell_sizes(labeled, cell_size_folder + file[:-4] + '-' + channel_name + '-cell-counts.csv', roi_pcount=roi_size, pixel_conv=p_microns, debug=True)
+        sf.get_cell_sizes(labeled, nd2_filename=file, save_filename=f'{cell_size_folder}cell-counts-batch-{batch_num}.csv', roi_pcount=roi_size, pixel_conv=p_microns, debug=True)
 
         # show images
         print('\nDisplaying image...')
@@ -213,7 +215,7 @@ for file in all_files:
         roi_size = roi.get_roi_size()
 
         # count cell sizes of the result image and put into file
-        sf.get_cell_sizes(result_labeled, cell_size_folder + file[:-4:] + '-cell-counts.csv', roi_pcount=roi_size,pixel_conv=p_microns, debug=showSteps)
+        sf.get_cell_sizes(result_labeled, nd2_filename=file, save_filename=f'{cell_size_folder}cell-counts-batch-{batch_num}.csv', roi_pcount=roi_size,pixel_conv=p_microns, debug=showSteps)
 
         if showSteps:
             print('Showing PCNA image filter steps...\n')
