@@ -21,6 +21,10 @@ def get_config():
         val = yaml.safe_load(f)
     return val
 
+# -----------------------------
+# file manipulation functions
+# -----------------------------
+
 def open_nd2file(filepath:str, channel_name=['far red', 'DAPI'], channel_num=[0],debug=False):
     """
     Opens the nd2 file at the filepath and grabs all images in the specified channels. The default channels are 'far red' (pcna marker) and 'DAPI' (neurons).
@@ -83,6 +87,60 @@ def get_imgs_from_channel(nd2img:ND2Reader, channel_name:str, channel_num:int, d
         index += 1
     
     return new_arr
+
+def get_cell_sizes(img, filename:str, roi_pcount=0, pixel_conv = 1, debug=False):
+    """
+    Will count the size of each object in the given image and output it to the given file.
+
+    :param img: image that is a labeled format
+    :param filename: file to output data, a csv file
+    :param roi_pcount: the pixel count of the roi
+    :param pixel_conv: the pixels to microns conversion
+    :param debug: if True, show print statements regarding process of function
+    """
+    # loop through number of cells and sum total pixels
+
+    num_cells = np.max(img)
+
+    if debug:
+        print(f'\nSaving cell size info in - {filename} - ...')
+
+    try:
+        f = open(filename, 'x')
+    except FileExistsError as e:
+        f = open(filename, 'w')
+
+    cells = []
+
+    f.write('cell,size,x-coordinate,y-coordinate,\n')
+
+    for i in range(num_cells):
+        # get size of cell
+        size = (img == (i+1)).sum()
+        size *= pixel_conv # convert pixels to microns
+        # print(f'cell #{i+1}: {size} pixels')
+
+        # get a single index in cell
+        index = np.where(img == (i+1))
+        x = index[0][0]
+        y = index[1][0]
+
+        # print(f'{i+1}: {x},{y} = {img[x][y]}')
+        f.write(f'{i+1},{size:.4f},{x},{y},\n')
+        cells.append(size)
+    
+    f.write(f'ROI,{roi_pcount*pixel_conv:.1f},,,')
+    f.close()
+
+    if debug:
+        print(f'Size of image: {img.shape[0]} x {img.shape[1]}')
+        print(f'Number of cells: {num_cells}')
+        print(f'Average cell size: {np.mean(cells):.4f} microns')
+        print(f'ROI size: {roi_pcount*pixel_conv:.1f} microns')
+
+# ------------------------------------
+# image manipulation helper functions
+# ------------------------------------
 
 def get_edges(img):
     """
@@ -165,6 +223,10 @@ def apply_multi_otsu(img, c = 3):
 
     return img, mask
 
+# -------------------
+# graphing functions
+# -------------------
+
 def use_subplots(imgs:list, titles = [], ncols = 2, nrows=1, figure_title = None):
     """Show images in a matplotlib subplot format.
 
@@ -217,43 +279,9 @@ def show_single_img(img, title:str, pixel_microns=.000325):
     plt.title(title)
     plt.show()
 
-def create_image_overlay(labeled_image, orig_img):
-    """Combines two images by first creating an rbg image from the labeled image, 
-    then overlaying the original image onto the colored image wherever the colored image is black.
-    Continuation of process image function.
-
-    :param array labeled_image: array containing labels from count function; array of shape(h,w)
-    :param array orig_img: array of shape (h,w)
-
-    :return array: array of shape (h,w,3)
-    """
-    # color the counted cells a random color
-
-    # TO DO:
-    # FIX RGB VALUES SO BETWEEN 0 AND 1
-    colored_labeled_img = color.label2rgb(labeled_image, bg_label=0)
-
-    # convert original image to grayscale and scale down brightness
-    gray_img = orig_img/np.max(orig_img)
-    if np.mean(gray_img) < .3:
-        gray_img = color.gray2rgb(orig_img)/np.max(orig_img) * 1.5
-    else:
-        gray_img = color.gray2rgb(orig_img)/np.max(orig_img)
-    # colored_labeled_img = colored_labeled_img
-
-    # find where colors are
-    colored = colored_labeled_img != [0,0,0]
-    # find where colors aren't by performing OR on above
-    non_c = np.any(colored, 2)
-    non_c = np.invert(non_c)
-
-    # don't have to create new array
-    # set non colored parts to original image
-    colored_labeled_img[non_c] = gray_img[non_c]
-
-    # show_single_img(colored_labeled_img, 'Final result')
-
-    return colored_labeled_img
+# -------------------------
+# actual process functions
+# -------------------------
 
 def pcna_process(img, debug=False, mask=None, artifact_size=10):
     """
@@ -472,52 +500,40 @@ def combine_channels(pcna_img, dapi_img, debug = False, artifact_size=10):
     # else:
     #     return img_and
 
-def get_cell_sizes(img, filename:str, roi_pcount=0, pixel_conv = 1, debug=False):
+def create_image_overlay(labeled_image, orig_img):
+    """Combines two images by first creating an rbg image from the labeled image, 
+    then overlaying the original image onto the colored image wherever the colored image is black.
+    Continuation of process image function.
+
+    :param array labeled_image: array containing labels from count function; array of shape(h,w)
+    :param array orig_img: array of shape (h,w)
+
+    :return array: array of shape (h,w,3)
     """
-    Will count the size of each object in the given image and output it to the given file.
+    # color the counted cells a random color
 
-    :param img: image that is a labeled format
-    :param filename: file to output data, a csv file
-    :param roi_pcount: the pixel count of the roi
-    :param pixel_conv: the pixels to microns conversion
-    :param debug: if True, show print statements regarding process of function
-    """
-    # loop through number of cells and sum total pixels
+    # TO DO:
+    # FIX RGB VALUES SO BETWEEN 0 AND 1
+    colored_labeled_img = color.label2rgb(labeled_image, bg_label=0)
 
-    num_cells = np.max(img)
+    # convert original image to grayscale and scale down brightness
+    gray_img = orig_img/np.max(orig_img)
+    if np.mean(gray_img) < .3:
+        gray_img = color.gray2rgb(orig_img)/np.max(orig_img) * 1.5
+    else:
+        gray_img = color.gray2rgb(orig_img)/np.max(orig_img)
+    # colored_labeled_img = colored_labeled_img
 
-    if debug:
-        print(f'\nSaving cell size info in - {filename} - ...')
+    # find where colors are
+    colored = colored_labeled_img != [0,0,0]
+    # find where colors aren't by performing OR on above
+    non_c = np.any(colored, 2)
+    non_c = np.invert(non_c)
 
-    try:
-        f = open(filename, 'x')
-    except FileExistsError as e:
-        f = open(filename, 'w')
+    # don't have to create new array
+    # set non colored parts to original image
+    colored_labeled_img[non_c] = gray_img[non_c]
 
-    cells = []
+    # show_single_img(colored_labeled_img, 'Final result')
 
-    f.write('cell,size,x-coordinate,y-coordinate,\n')
-
-    for i in range(num_cells):
-        # get size of cell
-        size = (img == (i+1)).sum()
-        size *= pixel_conv # convert pixels to microns
-        # print(f'cell #{i+1}: {size} pixels')
-
-        # get a single index in cell
-        index = np.where(img == (i+1))
-        x = index[0][0]
-        y = index[1][0]
-
-        # print(f'{i+1}: {x},{y} = {img[x][y]}')
-        f.write(f'{i+1},{size:.4f},{x},{y},\n')
-        cells.append(size)
-    
-    f.write(f'ROI,{roi_pcount*pixel_conv:.1f},,,')
-    f.close()
-
-    if debug:
-        print(f'Size of image: {img.shape[0]} x {img.shape[1]}')
-        print(f'Number of cells: {num_cells}')
-        print(f'Average cell size: {np.mean(cells):.4f} microns')
-        print(f'ROI size: {roi_pcount*pixel_conv:.1f} microns')
+    return colored_labeled_img
