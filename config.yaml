@@ -32,7 +32,7 @@ singleImage: True
 # user_file: '6dpi-uoi2500Tg-2R-#17-sxn4005.nd2'
 user_file: 'S2-6dpi-uoi2506Tg-4R-#13-sxn2003.nd2'
 
-# minimum size of cells to be counted
+# minimum size of cells in pixels to be counted
 # anything smaller than this size will be discounted
 artifact_size: 15
 
