@@ -130,7 +130,7 @@ def get_cell_sizes(img, nd2_filename:str, save_filename:str, roi_pcount=0, pixel
     for i in range(num_cells):
         # get size of cell
         size = (img == (i+1)).sum()
-        size *= pixel_conv # convert pixels to microns
+        # size *= pixel_conv # convert pixels to microns
         # print(f'cell #{i+1}: {size} pixels')
 
         # get a single index in cell
@@ -142,7 +142,7 @@ def get_cell_sizes(img, nd2_filename:str, save_filename:str, roi_pcount=0, pixel
         f.write(f'{i+1},{size:.4f},{x},{y},\n')
         cells.append(size)
     
-    f.write(f'ROI,{roi_pcount*pixel_conv:.1f},\n')
+    f.write(f'ROI,{roi_pcount:.1f},\n')
     f.close()
 
     if debug:
@@ -345,7 +345,7 @@ def pcna_process(img, debug=False, mask=None, artifact_size=10):
     
     # apply opening morph to separate cells better
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
-    progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=1)
+    progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=2)
     if debug:
         steps.append(copy(progress_img))
         titles.append('opening applied')
@@ -443,7 +443,7 @@ def dapi_process(img, debug=False, mask=None, artifact_size=10):
 
     # apply opening morph to separate cells better
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
-    progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=1)
+    progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=2)
     if debug:
         steps.append(copy(progress_img))
         titles.append('opening applied')
