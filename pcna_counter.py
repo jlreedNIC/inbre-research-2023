@@ -106,10 +106,11 @@ for file in all_files:
 
         # process and count imgs
         print('\nApplying filters...')
-        if channel == 'DAPI':
-            labeled, steps, titles = sf.dapi_process(img, debug=True, mask=roi_mask, artifact_size=artifact_size)
-        else:
-            labeled, steps, titles = sf.pcna_process(img, debug=True, mask=roi_mask, artifact_size=artifact_size)
+        # if channel == 'DAPI':
+        #     labeled, steps, titles = sf.dapi_process(img, debug=True, mask=roi_mask, artifact_size=artifact_size)
+        # else:
+        #     labeled, steps, titles = sf.pcna_process(img, debug=True, mask=roi_mask, artifact_size=artifact_size)
+        labeled, steps, titles = sf.orig_process(img, debug=True, mask=roi_mask, artifact_size=artifact_size)
 
         # get counts from each image
         count = np.max(labeled)
@@ -177,9 +178,11 @@ for file in all_files:
 
         # process and count imgs
         # pcna_steps and pcna_titles will be empty lists if showSteps is selected
-        # pcna_labeled, pcna_steps, pcna_titles = sf.new_imp_process(pcna_img, debug=showSteps, mask=roi_mask)
-        pcna_labeled, pcna_steps, pcna_titles = sf.pcna_process(pcna_img, debug=showSteps, mask=roi_mask, artifact_size=artifact_size)
-        dapi_labeled, dapi_steps, dapi_titles = sf.dapi_process(dapi_img, debug=showSteps, mask=roi_mask, artifact_size=artifact_size)
+        # pcna_labeled, pcna_steps, pcna_titles = sf.pcna_process(pcna_img, debug=showSteps, mask=roi_mask, artifact_size=artifact_size)
+        # dapi_labeled, dapi_steps, dapi_titles = sf.dapi_process(dapi_img, debug=showSteps, mask=roi_mask, artifact_size=artifact_size)
+
+        pcna_labeled, pcna_steps, pcna_titles = sf.orig_process(pcna_img, debug=showSteps, mask=roi_mask, artifact_size=artifact_size)
+        dapi_labeled, dapi_steps, dapi_titles = sf.orig_process(dapi_img, debug=showSteps, mask=roi_mask, artifact_size=artifact_size)
         if showSteps:
             print('\nApplying filters...')
 
