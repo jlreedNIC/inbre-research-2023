@@ -345,7 +345,7 @@ def pcna_process(img, debug=False, mask=None, artifact_size=10):
     
     # apply opening morph to separate cells better
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
-    progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=2)
+    progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=1)
     if debug:
         steps.append(copy(progress_img))
         titles.append('opening applied')
@@ -443,7 +443,7 @@ def dapi_process(img, debug=False, mask=None, artifact_size=10):
 
     # apply opening morph to separate cells better
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
-    progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=2)
+    progress_img = cv2.morphologyEx(progress_img, cv2.MORPH_OPEN, kernel, iterations=1)
     if debug:
         steps.append(copy(progress_img))
         titles.append('opening applied')
