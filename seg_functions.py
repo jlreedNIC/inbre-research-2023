@@ -382,13 +382,14 @@ def orig_process(img, debug=False, mask=None, artifact_size=10):
         print(f'Image segmented. {count} cells counted.')
     
     # remove small objects and relabel array
-    size = 10
-    final_image = morphology.remove_small_objects(final_image, min_size=size)
+    # size = 10
+    final_image = morphology.remove_small_objects(final_image, min_size=artifact_size)
     final_image, count = measure.label(final_image, connectivity=1, return_num=True)
     if debug:
         steps.append(copy(final_image))
-        titles.append(f'artifacts removed <= {size}. Count: {count}')
-        print(f'Removed artifacts smaller than {size} and recounted: {count} cells.')
+        titles.append(f'artifacts removed <= {artifact_size}. Count: {count}')
+        print(f'Removed artifacts smaller than {artifact_size} and recounted: {count} cells.')
+        # show_single_img(progress_img, f'Small artifact removal {artifact_size}')
 
     return final_image, steps, titles
 
