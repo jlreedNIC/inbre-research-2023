@@ -172,7 +172,7 @@ for file in all_files:
             print(f'\nMiddle slice found at {mid_slice}.')
 
         # select roi
-        roi = ROI(pcna_img)
+        roi = ROI(dapi_img)
         roi.get_roi()
         roi_mask = roi.create_roi_mask()
 
